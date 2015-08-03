@@ -59,18 +59,14 @@ for c = 1:size(CaseTable,2)
                continue
            elseif ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
                tempCol = cell(size(FeaturesTable,1),1);
-               eval(['FeaturesTable.' char(regexprep(Data{r,c},'\W','')) '=' tempCol ';'])
-%              tempFeaturesTable = cell2table(cell(size(FeaturesTable,1),1));
-%              eval(['tempFeaturesTable.' char(regexprep(Data{r,c},'\W','')) '={};'])
-%              eval(['tempFeaturesTable.Properties.VariableNames={''' char(regexprep(Data{r,c},'\W','')) '''};'])
-%              FeaturesTable = [FeaturesTable tempFeaturesTable];
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '=tempCol;'])
            end
-           %Add the answer as a value & replace with 'Unsure' if blank/uns
+           %Add the answer as a value & replace with blank if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
-           if isempty(ansVal) || strcmp(currentVal,'Unsure')|| strcmp(currentVal,'#N/A') || strcmp(currentVal,'Not known') || strcmp(currentVal,'Not specific') || strcmp(currentVal,'Not assessed') || strcmp(currentVal,'Nil specific')
-               eval(['FeaturesTable.' char(regexprep(Data{r,c},'\W','')) '(' num2str(r) ')' '={''Unsure''};'])
+           if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific')
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '(' num2str(r) ')' '={''''};'])
            else
-               eval(['FeaturesTable.' char(regexprep(Data{r,c},'\W','')) '(' num2str(r) ')' '=' ansVal ';'])
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '(' num2str(r) ')' '={ansVal};'])
            end
         end
     end
