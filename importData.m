@@ -101,14 +101,3 @@ Data.ans20 = cellVectors(:,78);
 
 %% Clear temporary variables
 clearvars data raw cellVectors;
-
-%% Clean Data
-% CleanData = Data;
-% for c = 1:size(CleanData,2) 
-%     colName = CleanData.Properties.VariableNames{c};
-%     if strfind(colName,'questxt') % Remove spaces & specials chars in question txts so they work as col names
-%         for r = 1:size(CleanData,1)
-%             CleanData{r,c} = regexprep(CleanData{r,c},'\W','');
-%         end
-%     end
-% end
