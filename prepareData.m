@@ -47,16 +47,17 @@ end
 CaseTable = caseTableArray{1};
 
 %% Loop through cols & rows of CaseTable Table, add questions as cols of Feature Table and ans as values
-FeaturesTable = cell2table(cell(size(CaseTable,1),0));
-FeaturesTable.Properties.RowNames = CaseTable{:,1};
+% FeaturesTable = cell2table(cell(size(CaseTable,1),0));
+% FeaturesTable.Properties.RowNames = CaseTable{:,1};
+FeaturesTable = table;
 for c = 1:size(CaseTable,2)
     colName = CaseTable.Properties.VariableNames{c};
-    if strfind('questxt',colName)
+    if strfind(colName,'questxt')
         for r = 1:size(CaseTable,1)
            if ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
                eval(['FeaturesTable.' char(CaseTable{r,c}) '={};'])
            end
-           eval(['FeaturesTable.' char(CaseTable{r,c}) '=' char(CaseTable{r,c+1})])
+           eval(['FeaturesTable.' char(CaseTable{r,c}) '(' r ')' '=' char(CaseTable{r,c+1}) ';'])
         end
     end
 end

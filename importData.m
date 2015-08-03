@@ -101,15 +101,19 @@ Data.ans20 = cellVectors(:,78);
 %% Clear temporary variables
 clearvars data raw cellVectors;
 
-%% Replace Answer Unsurities in Data Table with "Unsure"
+%% Clean Data
 CleanData = Data;
-for c = 1:size(CleanData,2)
+for c = 1:size(CleanData,2) 
     colName = CleanData.Properties.VariableNames{c};
-    if strfind('ans',colName)
+    if strfind(colName,'ans') % Replace Answer Unsurities in Data Table with "Unsure"
         for r = 1:size(CleanData,1)
-            if CleanData{r,c} == '' || CleanData{r,c} == '#N/A' || CleanData{r,c} == 'Not known' || CleanData{r,c} == 'Not specific' || CleanData{r,c} == 'Not assessed'
-                CleanData{r,c} = 'Unsure';
+            if isempty(char(CleanData{r,c})) || strcmp(char(CleanData{r,c}),'#N/A') || strcmp(char(CleanData{r,c}),'Not known') || strcmp(char(CleanData{r,c}),'Not specific') || strcmp(char(CleanData{r,c}),'Not assessed')
+                CleanData{r,c} = {'Unsure'};
             end
         end
+%     elseif strfind(colName,'questxt') % Remove spaces & specials chars in question txts so they work as col names
+%         for r = 1:size(CleanData,1)
+%             CleanData{r,c} = regexprep(CleanData{r,c},'\W','');
+%         end
     end
 end
