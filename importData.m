@@ -105,17 +105,7 @@ clearvars data raw cellVectors;
 CleanData = Data;
 for c = 1:size(CleanData,2) 
     colName = CleanData.Properties.VariableNames{c};
-    if strfind(colName,'ans') % Replace Answer Unsurities in Data Table with "Unsure"
-        for r = 1:size(CleanData,1)
-            currentVal = CleanData{r,c}{1};
-            if isnumeric(currentVal)
-                currentVal = num2str(currentVal);
-            end
-            if isempty(currentVal) || strcmp(currentVal,'#N/A') || strcmp(currentVal,'Not known') || strcmp(currentVal,'Not specific') || strcmp(currentVal,'Not assessed') || strcmp(currentVal,'Nil specific') 
-                CleanData{r,c} = {'Unsure'};
-            end
-        end
-    elseif strfind(colName,'questxt') % Remove spaces & specials chars in question txts so they work as col names
+    if strfind(colName,'questxt') % Remove spaces & specials chars in question txts so they work as col names
         for r = 1:size(CleanData,1)
             CleanData{r,c} = regexprep(CleanData{r,c},'\W','');
         end

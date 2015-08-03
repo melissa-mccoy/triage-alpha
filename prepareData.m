@@ -71,7 +71,8 @@ FeaturesAnalysis.Properties.RowValues = {'overall','pc_chest','pc_throat','pc_ab
 for c = 1:size(FeaturesTable,2)
     overallMissing = 0; chestMissing = 0; throatMissing = 0; abdMissing = 0; digMissing = 0; earMissing = 0; tempMissing = 0; skinMissing = 0; eyeMissing = 0; headMissing = 0; noseMissing = 0; otherMissing = 0;
     for r = 1:size(FeaturesTable,1)
-        if strcmp(FeaturesTable{r,c}{1},'Unsure')
+        currentVal = FeaturesTable{r,c}{1};
+        if strcmp(currentVal,'Unsure')|| strcmp(currentVal,'#N/A') || strcmp(currentVal,'Not known') || strcmp(currentVal,'Not specific') || strcmp(currentVal,'Not assessed') || strcmp(currentVal,'Nil specific') 
             overallMissing = overallMissing+1;
             if FeaturesTable.pc_chest(r){1} == 1
                 chestMissing = chestMissing+1;
