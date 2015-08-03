@@ -25,8 +25,15 @@ clearvars CaseTable1 CaseTable2 CaseTable3 CaseTable4 CaseTable5 CaseTable6 Case
 for row = 1:size(DataTemp,1)
     caseNo = DataTemp.case_no{row};
     for n = 1:size(caseTableArray,2)
+        %Denote current table and current case numbers in table
         currentTable = caseTableArray{n};
-        if any(ismember(currentTable.case_no, caseNo))
+        if isempty(currentTable.case_no)
+            currentCases = {};
+        else
+            currentCases = cellfun(@num2str,currentTable.case_no,'UniformOutput',false);
+        end
+        %Add row to a table without the case yet
+        if any(ismember(currentCases,num2str(caseNo)))
             continue
         elseif n == 1
             caseTableArray{n} = [caseTableArray{n}; DataTemp(row,:)];

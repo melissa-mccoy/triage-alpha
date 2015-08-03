@@ -19,8 +19,8 @@ cellVectors = raw(:,[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23
 Data = table;
 
 %% Allocate imported array to column variable names
-Data.case_no = cellfun(@num2str,cellVectors(:,1),'UniformOutput',false);
-% Data.case_no = cellVectors(:,1);
+% Data.case_no = cellfun(@num2str,cellVectors(:,1),'UniformOutput',false);
+Data.case_no = cellVectors(:,1);
 Data.patient_no = cellVectors(:,2);
 Data.self_vs_dr = cellVectors(:,3);
 Data.tas_recommends = cellVectors(:,4);
