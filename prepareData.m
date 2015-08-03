@@ -1,4 +1,4 @@
-%% Loop through Data table,move same-case rows into separate tables, join the tables
+%% Loop through CleanData table,move same-case rows into separate tables, join the tables
 CaseTable1 = cell2table(cell(0,size(DataTemp,2)));
 CaseTable1.Properties.VariableNames = DataTemp.Properties.VariableNames;
 CaseTable2 = cell2table(cell(0,61));
@@ -47,13 +47,16 @@ end
 CaseTable = caseTableArray{1};
 
 %% Loop through cols & rows of CaseTable Table, add questions as cols of Feature Table and ans as values
-FeaturesTable = table;
+FeaturesTable = cell2table(cell(size(CaseTable,1),0));
+FeaturesTable.Properties.RowNames = CaseTable{:,1};
 for c = 1:size(CaseTable,2)
-    if findstr('questxt',CaseTable.Properties.VariableNames{c})
+    colName = CaseTable.Properties.VariableNames{c};
+    if strfind('questxt',colName)
         for r = 1:size(CaseTable,1)
-            
+           if ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
+               eval(['FeaturesTable.' char(CaseTable{r,c}) '={};'])
+           end
+           eval(['FeaturesTable.' char(CaseTable{r,c}) '=' char(CaseTable{r,c+1})])
         end
-    elseif findstr('ans',CaseTable.Properties.VariableNames{c})
-    else
     end
 end
