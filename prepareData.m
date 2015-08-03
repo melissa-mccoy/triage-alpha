@@ -54,10 +54,31 @@ for c = 1:size(CaseTable,2)
     colName = CaseTable.Properties.VariableNames{c};
     if strfind(colName,'questxt')
         for r = 1:size(CaseTable,1)
-           if ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
+           if isempty(CaseTable{r,c}{1})
+               continue
+           elseif ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
                eval(['FeaturesTable.' char(CaseTable{r,c}) '={};'])
            end
            eval(['FeaturesTable.' char(CaseTable{r,c}) '(' r ')' '=' char(CaseTable{r,c+1}) ';'])
         end
     end
 end
+
+%% Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
+FeaturesAnalysis = cell2table(cell(0,size(FeaturesTable,2)));
+FeaturesAnalysis.Properties.VariableNames = FeaturesTable.Properties.VariableNames;
+FeaturesAnalysis.Properties.RowValues = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
+for c = 1:size(FeaturesTable,2)
+    overallMissing = 0; chestMissing = 0; throatMissing = 0; abdMissing = 0; digMissing = 0; earMissing = 0; tempMissing = 0; skinMissing = 0; eyeMissing = 0; headMissing = 0; noseMissing = 0; otherMissing = 0;
+    for r = 1:size(FeaturesTable,1)
+        if strcmp(FeaturesTable{r,c}{1},'Unsure')
+            overallMissing = overallMissing+1;
+            if FeaturesTable.pc_chest(r){1} == 1
+                chestMissing = chestMissing+1;
+            end
+            %if statements for all
+        end         
+    end
+    FeaturesAnalysis({'overall'},c)
+end
+%% Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
