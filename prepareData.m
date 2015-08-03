@@ -25,15 +25,8 @@ clearvars CaseTable1 CaseTable2 CaseTable3 CaseTable4 CaseTable5 CaseTable6 Case
 for row = 1:size(DataTemp,1)
     caseNo = DataTemp.case_no{row};
     for n = 1:size(caseTableArray,2)
-        %Denote current table and current case numbers in table
         currentTable = caseTableArray{n};
-        if isempty(currentTable.case_no)
-            currentCases = {};
-        else
-            currentCases = cellfun(@num2str,currentTable.case_no,'UniformOutput',false);
-        end
-        %Add row to a table without the case yet
-        if any(ismember(currentCases,num2str(caseNo)))
+        if any(ismember(currentTable.case_no, caseNo))
             continue
         elseif n == 1
             caseTableArray{n} = [caseTableArray{n}; DataTemp(row,:)];
@@ -86,8 +79,7 @@ end
 % for c = 1:size(FeaturesTable,2)
 %     overallMissing = 0; chestMissing = 0; throatMissing = 0; abdMissing = 0; digMissing = 0; earMissing = 0; tempMissing = 0; skinMissing = 0; eyeMissing = 0; headMissing = 0; noseMissing = 0; otherMissing = 0;
 %     for r = 1:size(FeaturesTable,1)
-%         currentVal = FeaturesTable{r,c}{1};
-%         if isempty(currentVal)
+%         if isempty(FeaturesTable{r,c}{1}) 
 %             overallMissing = overallMissing+1;
 %             if FeaturesTable.pc_chest(r){1} == 1
 %                 chestMissing = chestMissing+1;
