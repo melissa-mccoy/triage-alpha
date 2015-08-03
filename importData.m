@@ -107,7 +107,11 @@ for c = 1:size(CleanData,2)
     colName = CleanData.Properties.VariableNames{c};
     if strfind(colName,'ans') % Replace Answer Unsurities in Data Table with "Unsure"
         for r = 1:size(CleanData,1)
-            if isempty(char(CleanData{r,c})) || strcmp(char(CleanData{r,c}),'#N/A') || strcmp(char(CleanData{r,c}),'Not known') || strcmp(char(CleanData{r,c}),'Not specific') || strcmp(char(CleanData{r,c}),'Not assessed')
+            currentVal = CleanData{r,c}{1};
+            if isnumeric(currentVal)
+                currentVal = num2str(currentVal);
+            end
+            if isempty(currentVal) || strcmp(currentVal,'#N/A') || strcmp(currentVal,'Not known') || strcmp(currentVal,'Not specific') || strcmp(currentVal,'Not assessed') || strcmp(currentVal,'Nil specific') 
                 CleanData{r,c} = {'Unsure'};
             end
         end
