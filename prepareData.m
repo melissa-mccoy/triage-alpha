@@ -57,14 +57,15 @@ for c = 1:size(CaseTable,2)
                continue
            elseif ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
                tempCol = cell(size(FeaturesTable,1),1);
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '=tempCol;'])
+               tempCol(:,1) = {'Unsure'};
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '=tempCol;'])
            end
-           %Add the answer as a value & replace with blank if an unsuretiy
+           %Add the answer as a value & replace with 'Unsure' if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
            if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific')
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '(' num2str(r) ')' '={''''};'])
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '(' num2str(r) ')' '={''Unsure''};'])
            else
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'\W','')) '(' num2str(r) ')' '={ansVal};'])
+               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '(' num2str(r) ')' '={ansVal};'])
            end
         end
     end
