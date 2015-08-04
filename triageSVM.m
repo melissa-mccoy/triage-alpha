@@ -33,9 +33,9 @@ function resultsTable = triageSVM(inputX,Y)
         %Divide into train vs test data
         trainPrecentage = .7;
         trainCutoffIndex = fix(size(Y,1)*trainPrecentage);
-        trainX = dumX(1:trainCutoffIndex,1:f);
+        trainX = dumX(1:trainCutoffIndex,:);
         trainY = Y(1:trainCutoffIndex);
-        testX = dumX((trainCutoffIndex+1):end,1:f);
+        testX = dumX((trainCutoffIndex+1):end,:);
         testY = Y((trainCutoffIndex+1):end);
         
         %Turn dumXs into matDumXs
@@ -52,7 +52,7 @@ function resultsTable = triageSVM(inputX,Y)
         CP_Train = classperf(trainY, labelTrain,'Positive',{'DR'}, 'Negative', {'SELF'});
 
         %Train Model on AllData with Cross Validation & Analyze Performance
-        SVMModelCV = fitcsvm(XMat(:,1:f),Y,'Crossval','on','KFold',10,'Standardize',true,'KernelFunction','gaussian','ClassNames',{'SELF','DR'});
+        SVMModelCV = fitcsvm(XMat,Y,'Crossval','on','KFold',10,'Standardize',true,'KernelFunction','gaussian','ClassNames',{'SELF','DR'});
         [labelCV,scoreCV] = kfoldPredict(SVMModelCV);
         CP_CV = classperf(Y, labelCV,'Positive',{'DR'}, 'Negative', {'SELF'});
         %Error Rate
@@ -67,7 +67,7 @@ function resultsTable = triageSVM(inputX,Y)
 
         %% Write to Results Table
         type(end+1,1) = {'CP_Train'};
-        numFeatures(end+1,1) = f;
+        numFeatures(end+1,1) = size(inputX,2);
         numObservations(end+1,1) = CP_Train.NumberOfObservations;
         sensitivity(end+1,1) = CP_Train.Sensitivity;
         specificity(end+1,1) = CP_Train.Specificity;
@@ -78,7 +78,7 @@ function resultsTable = triageSVM(inputX,Y)
         genError(end+1,1) = 0;
 
         type(end+1,1) = {'CP_Test'};
-        numFeatures(end+1,1) = f;
+        numFeatures(end+1,1) = size(inputX,2);
         numObservations(end+1,1) = CP_Test.NumberOfObservations;
         sensitivity(end+1,1) = CP_Test.Sensitivity;
         specificity(end+1,1) = CP_Test.Specificity;
@@ -89,7 +89,7 @@ function resultsTable = triageSVM(inputX,Y)
         genError(end+1,1) = 0;
 
         type(end+1,1) = {'CP_CV'};
-        numFeatures(end+1,1) = f;
+        numFeatures(end+1,1) = size(inputX,2);
         numObservations(end+1,1) = CP_CV.NumberOfObservations;
         sensitivity(end+1,1) = CP_CV.Sensitivity;
         specificity(end+1,1) = CP_CV.Specificity;
@@ -99,6 +99,6 @@ function resultsTable = triageSVM(inputX,Y)
         prevalence(end+1,1) = CP_CV.Prevalence;
         genError(end+1,1) = genError_CV;
 
-    end
+%     end
     resultsTable = table(type,numFeatures,numObservations,sensitivity,specificity,errorRate,posPred,negPred,prevalence,genError);
 end
