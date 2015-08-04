@@ -96,78 +96,29 @@ for c = 17:size(FeaturesTable,2)
     % Add Cacluated Percentage for given feature to all pc structs
     rows = size(FeaturesTable,1);
     for pc = 1:size(pcList,2)
-        eval(['FeaturesAnalysis.' pcList{pc} '(c) = {(rows-' pcList{pc} 'Missing)/rows};'])
+        eval(['FeaturesAnalysis.' pcList{pc} '{c} = (rows-' pcList{pc} 'Missing)/rows;'])
     end
 end
 
-%%OLD WAY
-% pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
-% for pc = 1:size(pcList,2)
-%     eval([pcList{pc} '=struct;'])
-% end
-% 
-% % Calculate % present data for each feature fitered to each pc & add to struct
-% for c = 17:size(FeaturesTable,2)
-%     overallMissing = 0; chestMissing = 0; throatMissing = 0; abdMissing = 0; digMissing = 0; earMissing = 0; tempMissing = 0; skinMissing = 0; eyeMissing = 0; headMissing = 0; noseMissing = 0; otherMissing = 0;
-%     for r = 1:size(FeaturesTable,1)
-%         if isempty(FeaturesTable{r,c}{1}) 
-%             overallMissing = overallMissing+1;
-%             if strcmp(char(FeaturesTable.pc_chest(r)),'No')
-%                 chestMissing = chestMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_throat(r)),'No')
-%                 throatMissing = throatMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_abd(r)),'No')
-%                 abdMissing = abdMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_dig(r)),'No')
-%                 digMissing = digMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_ear(r)),'No')
-%                 earMissing = earMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_temp(r)),'No')
-%                 tempMissing = tempMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_skin(r)),'No')
-%                 skinMissing = skinMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_eye(r)),'No')
-%                 eyeMissing = eyeMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_head(r)),'No')
-%                 headMissing = headMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_nose(r)),'No')
-%                 noseMissing = noseMissing+1;
-%             end
-%             if strcmp(char(FeaturesTable.pc_other(r)),'No')
-%                 otherMissing = otherMissing+1;
-%             end
-%         end         
-%     end
-%     % Add Cacluated Percentage for given feature to all pc structs
-%     rows = size(FeaturesTable,1);
-%     eval(['overall.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-overallMissing)/rows) ';'])
-%     eval(['pc_chest.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-chestMissing)/rows) ';'])
-%     eval(['pc_throat.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-throatMissing)/rows) ';'])
-%     eval(['pc_abd.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-abdMissing)/rows) ';'])
-%     eval(['pc_dig.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-digMissing)/rows) ';'])
-%     eval(['pc_ear.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-earMissing)/rows) ';'])
-%     eval(['pc_temp.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-tempMissing)/rows) ';'])
-%     eval(['pc_skin.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-skinMissing)/rows) ';'])
-%     eval(['pc_eye.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-eyeMissing)/rows) ';'])
-%     eval(['pc_head.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-headMissing)/rows) ';'])
-%     eval(['pc_nose.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-noseMissing)/rows) ';'])
-%     eval(['pc_other.' FeaturesTable.Properties.VariableNames{c} '=' num2str((rows-otherMissing)/rows) ';'])   
-% end
-
 %% Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
-% Create X_overall
-% X_overall = FeaturesTable(:,4:16);
-% for c = 1:size(FeaturesTable,2)
-%     if eval(['overall.' FeaturesTable.Properties.VariableNames{c}]) >= .5
-%         X_overall = [X_overall 
-% end
-% Create X_chest
+% Create X for all pcs (fyi only X_overall has pc Y/N cols as features)
+Y = FeaturesTable(:,2);
+X_overall = FeaturesTable(:,4:16);
+for pc = 2:size(pcList,2)
+    eval(['X_' pcList{pc} ' = FeaturesTable(:,15:16);'])
+end
+for pc = 1:size(pcList,2)
+    for c = 17:size(FeaturesTable,2)
+        eval(['currentPercentVal = FeaturesAnalysis.' pcList{pc} '{c};'])
+        if currentPercentVal >= .5
+            eval(['X_' pcList{pc} ' = [X_' pcList{pc} ' FeaturesTable(:,c)];'])
+        end
+    end
+end
+
+%% Detect triageSVM performance on each X/Y
+for pc = 1:size(pcList,2)
+    eval([pcList{pc} 'Results=triageSVM(X_' pcList{pc} ',Y);'])
+end
+
+
