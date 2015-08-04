@@ -73,7 +73,8 @@ end
 
 %% Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
-pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
+% pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
+pcList = {'overall','pc_chest'};
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
 FeaturesAnalysis.Properties.VariableNames = pcList;
 FeaturesAnalysis.Properties.RowNames = FeaturesTable.Properties.VariableNames;
@@ -84,42 +85,54 @@ for c = 17:size(FeaturesTable,2)
     end
     %Count missing values for given feature
     for r = 1:size(FeaturesTable,1)
-        if isempty(FeaturesTable{r,c}{1}) 
+        if strcmp(FeaturesTable{r,c}{1},'Unsure') 
             overallMissing = overallMissing+1;
             for pc = 2:size(pcList,2)
-                
-                if eval(['strcmp(FeaturesTable.' pcList{pc} '(r),''No'')'])
+                if eval(['strcmp(FeaturesTable.' pcList{pc} '(r),''Yes'')'])
                     eval([pcList{pc} 'Missing = ' pcList{pc} 'Missing+1;'])
                 end
             end
         end         
     end
     % Add Cacluated Percentage for given feature to all pc structs
-    rows = size(FeaturesTable,1);
-    for pc = 1:size(pcList,2)
-        eval(['FeaturesAnalysis.' pcList{pc} '{c} = (rows-' pcList{pc} 'Missing)/rows;'])
+    total = size(FeaturesTable,1);
+    FeaturesAnalysis.overall{c} = (total-overallMissing)/total;
+    for pc = 2:size(pcList,2)
+        eval(['total=sum(ismember(FeaturesTable.' pcList{pc} ',''Yes''));'])
+        eval(['FeaturesAnalysis.' pcList{pc} '{c} = (total-' pcList{pc} 'Missing)/total;'])
     end
 end
 
 %% Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
-% Create X for all pcs (fyi only X_overall has pc Y/N cols as features)
-Y = FeaturesTable(:,2);
-X_overall = FeaturesTable(:,4:16);
+% Initialize X for all pcs (fyi only X_overall has pc Y/N cols as features)
+XY_overall = FeaturesTable(:,[2 4:16]);
+XY_overall.overall = cell(size(XY_overall,1),1);
+XY_overall.overall(:) = {'Yes'};
 for pc = 2:size(pcList,2)
-    eval(['X_' pcList{pc} ' = FeaturesTable(:,15:16);'])
+    eval(['XY_' pcList{pc} ' = FeaturesTable(:,[2 15:16]);'])
+    eval(['XY_' pcList{pc} '.' pcList{pc} '=FeaturesTable.' pcList{pc}])
 end
+
+
 for pc = 1:size(pcList,2)
+    %Add features with >50% data within respective pcs
     for c = 17:size(FeaturesTable,2)
         eval(['currentPercentVal = FeaturesAnalysis.' pcList{pc} '{c};'])
         if currentPercentVal >= .5
-            eval(['X_' pcList{pc} ' = [X_' pcList{pc} ' FeaturesTable(:,c)];'])
+            eval(['XY_' pcList{pc} ' = [XY_' pcList{pc} ' FeaturesTable(:,c)];'])
         end
     end
+    %Delete cases that are not part of respective pcs & delete last col
+    eval(['currentPC=XY_' pcList{pc} '.' pcList{pc} ';'])
+    toDelete= ismember(currentPC,'No');
+    eval(['XY_' pcList{pc} '(toDelete,:)=[];'])
+    eval(['XY_' pcList{pc} '.' pcList{pc} '=[];'])
 end
 
 %% Detect triageSVM performance on each X/Y
-for pc = 1:size(pcList,2)
-    eval([pcList{pc} 'Results=triageSVM(X_' pcList{pc} ',Y);'])
-end
+% for pc = 1:size(pcList,2)
+%     eval([pcList{pc} 'Results=triageSVM(XY_' pcList{pc} '(:,2:end), XY_' pcList{pc} '.(1));'])
+% end
 
-
+overallResults = triageSVM(XY_overall(:,2:end),XY_overall.(1));
+chestResults = triageSVM(XY_pc_chest(:,2:end),XY_pc_chest.(1));
