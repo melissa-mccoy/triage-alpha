@@ -76,8 +76,7 @@ end
 
 %% Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
-% pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
-pcList = {'overall','pc_chest'};
+pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
 FeaturesAnalysis.Properties.VariableNames = pcList;
 FeaturesAnalysis.Properties.RowNames = FeaturesTable.Properties.VariableNames;
@@ -98,8 +97,8 @@ for c = 17:size(FeaturesTable,2)
         end         
     end
     % Add Cacluated Percentage for given feature to all pc structs
-    total = size(FeaturesTable,1);
-    FeaturesAnalysis.overall{c} = (total-overallMissing)/total;
+    totalOverall = size(FeaturesTable,1);
+    FeaturesAnalysis.overall{c} = (totalOverall-overallMissing)/totalOverall;
     for pc = 2:size(pcList,2)
         eval(['total=sum(ismember(FeaturesTable.' pcList{pc} ',''Yes''));'])
         eval(['FeaturesAnalysis.' pcList{pc} '{c} = (total-' pcList{pc} 'Missing)/total;'])
