@@ -21,9 +21,12 @@ CaseTable10 = cell2table(cell(0,61));
 CaseTable10.Properties.VariableNames = DataTemp.Properties.VariableNames([1,19:end]);
 caseTableArray = {CaseTable1,CaseTable2,CaseTable3,CaseTable4,CaseTable5,CaseTable6,CaseTable7,CaseTable8,CaseTable9,CaseTable10};
 clearvars CaseTable1 CaseTable2 CaseTable3 CaseTable4 CaseTable5 CaseTable6 CaseTable7 CaseTable8 CaseTable9 CaseTable10;
-
+% debug = {};
 for row = 1:size(DataTemp,1)
     caseNo = DataTemp.case_no{row};
+%     if any(DataTemp.(6){row}==0) || isempty(DataTemp.(6){row})
+%        debug(end+1) = {row};
+%     end
     for n = 1:size(caseTableArray,2)
         currentTable = caseTableArray{n};
         if any(ismember(currentTable.case_no, caseNo))
