@@ -25,7 +25,7 @@ function resultsTable = triageSVM(inputX,Y)
         dumX.(c) = dummyvar(nominal(inputX.(c)));
     end
 
-    for f = size(inputX,2):size(inputX,2)
+%     for f = size(inputX,2):size(inputX,2)
         %% Auto select best features
         % inmodel = sequentialfs(fun,X,Y);
 
