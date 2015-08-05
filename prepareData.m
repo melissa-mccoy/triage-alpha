@@ -1,4 +1,4 @@
-%% Loop through Data table,move same-case rows into separate tables, join the tables
+%% STEP1: Loop through Data table,move same-case rows into separate tables, join the tables
 CaseTable1 = cell2table(cell(0,size(DataTemp,2)));
 CaseTable1.Properties.VariableNames = DataTemp.Properties.VariableNames;
 CaseTable2 = cell2table(cell(0,61));
@@ -21,12 +21,9 @@ CaseTable10 = cell2table(cell(0,61));
 CaseTable10.Properties.VariableNames = DataTemp.Properties.VariableNames([1,19:end]);
 caseTableArray = {CaseTable1,CaseTable2,CaseTable3,CaseTable4,CaseTable5,CaseTable6,CaseTable7,CaseTable8,CaseTable9,CaseTable10};
 clearvars CaseTable1 CaseTable2 CaseTable3 CaseTable4 CaseTable5 CaseTable6 CaseTable7 CaseTable8 CaseTable9 CaseTable10;
-% debug = {};
+
 for row = 1:size(DataTemp,1)
     caseNo = DataTemp.case_no{row};
-%     if any(DataTemp.(6){row}==0) || isempty(DataTemp.(6){row})
-%        debug(end+1) = {row};
-%     end
     for n = 1:size(caseTableArray,2)
         currentTable = caseTableArray{n};
         if any(ismember(currentTable.case_no, caseNo))
@@ -49,16 +46,16 @@ end
 
 CaseTable = caseTableArray{1};
 
-%% Loop through cols & rows of CaseTable Table, add questions as cols of Feature Table and ans as values
+%% STEP2: Loop through cols & rows of CaseTable Table, add questions as cols of Feature Table and ans as values
 FeaturesTable = CaseTable(:,[1 3 5:18]);
 for c = 1:size(CaseTable,2)
-    colName = CaseTable.Properties.VariableNames{c};
-    if strfind(colName,'questxt')
+    currentColName = CaseTable.Properties.VariableNames{c};
+    if strfind(currentColName,'questxt')
         for r = 1:size(CaseTable,1)
            %Add the question as a feature
            if isempty(CaseTable{r,c}{1})
                continue
-           elseif ~any(ismember(FeaturesTable.Properties.VariableNames, CaseTable{r,c}))
+           elseif ~any(ismember(FeaturesTable.Properties.VariableNames, regexprep(CaseTable{r,c},'[\W\d]','')))
                tempCol = cell(size(FeaturesTable,1),1);
                tempCol(:,1) = {'Unsure'};
                eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '=tempCol;'])
