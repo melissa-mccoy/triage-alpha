@@ -102,7 +102,7 @@ for c = 17:size(FeaturesTable,2)
     end
 end
 
-%% Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
+%% STEP4: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
 % Initialize X for all pcs (fyi only X_overall has pc Y/N cols as features)
 XY_overall = FeaturesTable(:,[2 4:16]);
 XY_overall.overall = cell(size(XY_overall,1),1);
@@ -128,7 +128,7 @@ for pc = 1:size(pcList,2)
     eval(['XY_' pcList{pc} '.' pcList{pc} '=[];'])
 end
 
-%% Detect triageSVM performance on each X/Y
+%% STEP5: Detect triageSVM performance on each X/Y
 % for pc = 1:size(pcList,2)
 %     eval([pcList{pc} 'Results=triageSVM(XY_' pcList{pc} '(:,2:end), XY_' pcList{pc} '.(1));'])
 % end
