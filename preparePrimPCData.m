@@ -73,8 +73,9 @@ end
 
 %% STEP3: Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
+pcList = {'overall'}
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
-FeaturesAnalysis.Properties.VariableNames = {'overall'};
+FeaturesAnalysis.Properties.VariableNames = pcList;
 FeaturesAnalysis.Properties.RowNames = FeaturesTable.Properties.VariableNames;
 for c = 17:size(FeaturesTable,2)
     %Set missing count variable =0
