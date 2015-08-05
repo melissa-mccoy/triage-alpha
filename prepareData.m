@@ -55,23 +55,23 @@ for c = 1:size(CaseTable,2)
            %Add the question as a feature
            if isempty(CaseTable{r,c}{1})
                continue
-           elseif ~any(ismember(FeaturesTable.Properties.VariableNames, regexprep(CaseTable{r,c},'[\W\d]','')))
+           elseif ~any(ismember(FeaturesTable.Properties.VariableNames, lower(regexprep(CaseTable{r,c},'[\W\d]',''))))
                tempCol = cell(size(FeaturesTable,1),1);
                tempCol(:,1) = {'Unsure'};
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '=tempCol;'])
+               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '=tempCol;'])
            end
            %Add the answer as a value & replace with 'Unsure' if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
            if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific')
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '(' num2str(r) ')' '={''Unsure''};'])
+               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={''Unsure''};'])
            else
-               eval(['FeaturesTable.' char(regexprep(CaseTable{r,c},'[\W\d]','')) '(' num2str(r) ')' '={ansVal};'])
+               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={ansVal};'])
            end
         end
     end
 end
 
-%% Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
+%% STEP3: Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
 pcList = {'overall','pc_chest','pc_throat','pc_abd','pc_dig','pc_ear','pc_temp','pc_skin','pc_eye','pc_head','pc_nose','pc_other'};
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
