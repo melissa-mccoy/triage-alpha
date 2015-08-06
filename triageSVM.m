@@ -43,7 +43,7 @@ function resultsTable = triageSVM(inputX,Y)
     CP_Train = classperf(trainY, labelTrain,'Positive',{'DR'}, 'Negative', {'SELF'});
 
     %Train Model on AllData with Cross Validation & Analyze Performance
-    SVMModelCV = fitcsvm(XMat,Y,'Crossval','on','KFold',10,'Standardize',true,'KernelFunction','gaussian','ClassNames',{'SELF','DR'});
+    SVMModelCV = fitcsvm(XMat,Y,'Crossval','on','KFold',10,'Standardize',true,'KernelFunction','linear','ClassNames',{'SELF','DR'});
     [labelCV,scoreCV] = kfoldPredict(SVMModelCV);
     CP_CV = classperf(Y, labelCV,'Positive',{'DR'}, 'Negative', {'SELF'});
     %Error Rate
