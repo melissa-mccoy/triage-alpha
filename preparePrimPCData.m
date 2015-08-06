@@ -62,7 +62,7 @@ for c = 1:size(CaseTable,2)
            end
            %Add the answer as a value & replace with 'Unsure' if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
-           if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific')
+           if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific') || strcmp(ansVal,'Unsure/explore')
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={''Unsure''};'])
            else
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={ansVal};'])
@@ -73,7 +73,7 @@ end
 
 %% STEP3: Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
-pcList = {'overall'}
+pcList = {'overall'};
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
 FeaturesAnalysis.Properties.VariableNames = pcList;
 FeaturesAnalysis.Properties.RowNames = FeaturesTable.Properties.VariableNames;
