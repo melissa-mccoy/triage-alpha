@@ -24,46 +24,8 @@ function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
 
     %% Prep Data
     %Divide into train vs test data
-    trainPrecentage = .7;
+    trainPrecentage = .75;
     trainCutoffIndex = fix(size(dumY,1)*trainPrecentage);
-    trainHalfIndex = fix(trainCutoffIndex/2);
-    trainY = [];
-    trainX = table;
-    %Fill Train with Half 1's
-    countOne = 0;
-    countZero = 0;
-    i = 0;
-    while countOne < trainHalfIndex && countOne < trainHalfIndex
-        if dumY(i,1) == 1
-            trainY(end+1) = dumY(i,1);
-            trainX = [trainX; dumX(i,:)];
-            countOne = countOne + 1;
-        else
-            trainY(end+1) = dumY(i,1);
-            trainX = [trainX; dumX(i,:)];
-            countZero = countZero + 1;
-        end
-        i = i+1;
-    end
-    if countOne > countZero
-        while countOne > countZero
-        for n=1:missingZeros
-            if dumY(i,1) == 1
-                trainY(end+1) = dumY(i,1);
-                trainX = [trainX; dumX(i,:)];
-                countOne = countOne + 1;
-            end
-        end
-    else
-        missingOnes = countZero - countOne;
-    end
-    %Fill Train with Half 0's
-    for i = (trainHalfIndex+1):end
-        if dumY(i,1) == 1
-            trainY(end+1) = dumY(i,1);
-            trainX = dumX(i,:);
-        end
-    end
     trainX = dumX(1:trainCutoffIndex,:);
     trainY = dumY(1:trainCutoffIndex,1);
     testX = dumX((trainCutoffIndex+1):end,:);
