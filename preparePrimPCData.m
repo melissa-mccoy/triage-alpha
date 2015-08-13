@@ -93,15 +93,20 @@ end
 
 %% STEP4: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
 % Initialize X for given pc
-XY_pc = FeaturesTable(:,[2 15:16]);
+XY_pc = FeaturesTable(:,[2 5:16]);
 
 %Add features with >50% data within respective pcs
 for c = 17:size(FeaturesTable,2)
-    if FeaturesAnalysis.overall{c} >= .5
+    if FeaturesAnalysis.overall{c} >= .3
         XY_pc = [XY_pc FeaturesTable(:,c)];
     end
 end
 
 %% STEP5: Detect triageSVM performance on each X/Y
-pcResults = triageSVM(XY_pc(:,2:end),XY_pc.(1));
-
+% [overallResults,overallCVLabels] = triageSVM(XY_pc(:,2:end),XY_pc.(1));
+overallResults = table;
+for cParam = .01:.05:1
+    [resultsTable,predLabelTest,predLabelTrain] = triageSVMLib(XY_pc(:,2:end),XY_pc.(1),cParam);
+    overallResults = [overallResults; resultsTable];
+%     eval([regexprep(['resultsTable' num2str(C)],'[\W]','') ' = resultsTable;'])
+end

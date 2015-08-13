@@ -1,7 +1,5 @@
-function resultsTable = triageSVM(inputX,Y)
+function [resultsTable,labelCV] = triageSVM(inputX,Y)
     
-%     inputX = XY_overall(:,2:end);
-%     Y = XY_overall.(1);
     %Inistiates results tables; comment out if already created
     type = {};
     sensitivity = [];
