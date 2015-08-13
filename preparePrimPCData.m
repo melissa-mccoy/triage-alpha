@@ -57,13 +57,13 @@ for c = 1:size(CaseTable,2)
                continue
            elseif ~any(ismember(FeaturesTable.Properties.VariableNames, lower(regexprep(CaseTable{r,c},'[\W\d]',''))))
                tempCol = cell(size(FeaturesTable,1),1);
-               tempCol(:,1) = {'Unsure'};
+               tempCol(:,1) = {NaN};
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '=tempCol;'])
            end
            %Add the answer as a value & replace with 'Unsure' if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
            if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific') || strcmp(ansVal,'Unsure/explore')
-               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={''Unsure''};'])
+               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={NaN};'])
            else
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={ansVal};'])
            end
@@ -82,7 +82,7 @@ for c = 17:size(FeaturesTable,2)
     pcMissing = 0;
     %Count missing values for given feature
     for r = 1:size(FeaturesTable,1)
-        if strcmp(FeaturesTable{r,c}{1},'Unsure') 
+        if FeaturesTable{r,c}{1} == NaN 
             pcMissing = pcMissing+1;
         end         
     end
@@ -93,20 +93,22 @@ end
 
 %% STEP4: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
 % Initialize X for given pc
-XY_pc = FeaturesTable(:,[2 5:16]);
+% XY_pc = FeaturesTable(:,[2 5:16]);
 
 %Add features with >50% data within respective pcs
-for c = 17:size(FeaturesTable,2)
-    if FeaturesAnalysis.overall{c} >= .3
-        XY_pc = [XY_pc FeaturesTable(:,c)];
-    end
-end
+% for c = 17:size(FeaturesTable,2)
+%     if FeaturesAnalysis.overall{c} >= .4
+%         XY_pc = [XY_pc FeaturesTable(:,c)];
+%     end
+% end
+XY_pc = FeaturesTable(:,[2 5:end]);
 
 %% STEP5: Detect triageSVM performance on each X/Y
 % [overallResults,overallCVLabels] = triageSVM(XY_pc(:,2:end),XY_pc.(1));
 overallResults = table;
-for cParam = .01:.05:1
+cParam = 1;
+% for cParam = .01:.05:1
     [resultsTable,predLabelTest,predLabelTrain] = triageSVMLib(XY_pc(:,2:end),XY_pc.(1),cParam);
-    overallResults = [overallResults; resultsTable];
+%     overallResults = [overallResults; resultsTable];
 %     eval([regexprep(['resultsTable' num2str(C)],'[\W]','') ' = resultsTable;'])
-end
+% end
