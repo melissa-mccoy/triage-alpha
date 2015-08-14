@@ -57,13 +57,13 @@ for c = 1:size(CaseTable,2)
                continue
            elseif ~any(ismember(FeaturesTable.Properties.VariableNames, lower(regexprep(CaseTable{r,c},'[\W\d]',''))))
                tempCol = cell(size(FeaturesTable,1),1);
-               tempCol(:,1) = {NaN};
+               tempCol(:,1) = {'Unsure'};
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '=tempCol;'])
            end
            %Add the answer as a value & replace with 'Unsure' if an unsuretiy
            ansVal = CaseTable{r,c+1}{1};
            if isempty(ansVal) || strcmp(ansVal,'Unsure')|| strcmp(ansVal,'#N/A') || strcmp(ansVal,'Not known') || strcmp(ansVal,'Not specific') || strcmp(ansVal,'Not assessed') || strcmp(ansVal,'Nil specific') || strcmp(ansVal,'Unsure/explore')
-               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={NaN};'])
+               eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={''Unsure''};'])
            else
                eval(['FeaturesTable.' char(lower(regexprep(CaseTable{r,c},'[\W\d]',''))) '(' num2str(r) ')' '={ansVal};'])
            end
@@ -82,7 +82,7 @@ for c = 17:size(FeaturesTable,2)
     pcMissing = 0;
     %Count missing values for given feature
     for r = 1:size(FeaturesTable,1)
-        if FeaturesTable{r,c}{1} == NaN 
+        if strcmp(FeaturesTable{r,c}{1},'Unsure') 
             pcMissing = pcMissing+1;
         end         
     end
