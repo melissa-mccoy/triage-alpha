@@ -1,5 +1,6 @@
-function [resultsTable,labelCV] = triageSVM(inputX,Y)
-    
+% function [resultsTable,labelCV] = triageSVM(inputX,Y)
+    inputX = XY_pc(:,2:end);
+    Y = XY_pc.(1);
     %Inistiates results tables; comment out if already created
     type = {};
     sensitivity = [];
@@ -17,8 +18,8 @@ function [resultsTable,labelCV] = triageSVM(inputX,Y)
     for c = 1:size(inputX,2)
         dumX.(c) = dummyvar(nominal(inputX.(c)));
     end
-
-    %% Train & Test SVM
+    
+    %% Prep Data
     %Divide into train vs test data
     trainPrecentage = .7;
     trainCutoffIndex = fix(size(Y,1)*trainPrecentage);
@@ -32,6 +33,12 @@ function [resultsTable,labelCV] = triageSVM(inputX,Y)
     testXMat = cell2mat(table2cell(testX));
     XMat = cell2mat(table2cell(dumX));
 
+     %% Feature Selection
+    c = cvpartition(Y,'k',5);
+    opts = statset('display','iter');
+    inmodel = sequentialfs(@my_fun,XMat,Y,'cv',c,'options',opts);
+    
+    %% Train & Test SVM
     %Train Model on TrainData, Predict with test input data & Analyze Performance
     SVMModel = fitcsvm(trainXMat,trainY,'Standardize',true,'KernelFunction','linear','ClassNames',{'SELF','DR'});
     % 'Crossval','on','KFold',10,'PredictorNames',{'Breathing Problem','BreathingRate','ChestPain','Cold/flu-severity','CoughOnset','CoughSpasms','CoughType','Cough-severity','CurrentState','Inhaled/Ingest','Meds/Respiratory','OtherSymptoms','PMH/RespiratoryDis.','Precipfactors?','Sorethroat-severity','Sputum','Temperature','TreatmentTried','WorstTime'}
@@ -52,7 +59,8 @@ function [resultsTable,labelCV] = triageSVM(inputX,Y)
     fScore = 2*R*P/(R+P);
     %Generalization Error
     genError_CV = kfoldLoss(SVMModelCV);
-
+    
+    
 
     %% Write to Results Table
     type(end+1,1) = {'CP_Train'};

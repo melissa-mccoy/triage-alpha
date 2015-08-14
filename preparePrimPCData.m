@@ -71,7 +71,11 @@ for c = 1:size(CaseTable,2)
     end
 end
 
-%% STEP3: Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
+%% STEP3 OPTION1: Feature Selection based on their predictiveness
+% Achieved within triageSVMLib
+
+%% STEP3 OPTION2: Feature Selection based on the amount of present data
+% STEP3.1: Loop through columns in FeaturesTable, store % blanks overall & per pc in FeaturesAnalysis table
 % Create struct for current pc with key for each question features
 pcList = {'overall'};
 FeaturesAnalysis = cell2table(cell(size(FeaturesTable,2),size(pcList,2)));
@@ -91,24 +95,23 @@ for c = 17:size(FeaturesTable,2)
     FeaturesAnalysis.overall{c} = (pcOverall-pcMissing)/pcOverall;
 end
 
-%% STEP4: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
+%% STEP3.3: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
 % Initialize X for given pc
-% XY_pc = FeaturesTable(:,[2 5:16]);
+XY_pc = FeaturesTable(:,[2 15:16]);
 
 %Add features with >50% data within respective pcs
-% for c = 17:size(FeaturesTable,2)
-%     if FeaturesAnalysis.overall{c} >= .4
-%         XY_pc = [XY_pc FeaturesTable(:,c)];
-%     end
-% end
-XY_pc = FeaturesTable(:,[2 5:end]);
+for c = 17:size(FeaturesTable,2)
+    if FeaturesAnalysis.overall{c} >= .3
+        XY_pc = [XY_pc FeaturesTable(:,c)];
+    end
+end
+% XY_pc_opt = FeaturesTable(:,[2 16 18 26 30 61 62 91 106 130 209 264 315 325 334]);
 
 %% STEP5: Detect triageSVM performance on each X/Y
 % [overallResults,overallCVLabels] = triageSVM(XY_pc(:,2:end),XY_pc.(1));
 overallResults = table;
-cParam = 1;
-% for cParam = .01:.05:1
+for cParam = .01:.001:.03
     [resultsTable,predLabelTest,predLabelTrain] = triageSVMLib(XY_pc(:,2:end),XY_pc.(1),cParam);
-%     overallResults = [overallResults; resultsTable];
+    overallResults = [overallResults; resultsTable];
 %     eval([regexprep(['resultsTable' num2str(C)],'[\W]','') ' = resultsTable;'])
-% end
+end

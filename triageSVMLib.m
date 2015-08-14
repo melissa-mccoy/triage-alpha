@@ -2,6 +2,7 @@ function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
 %     inputX = XY_pc(:,2:end);
 %     Y = XY_pc.(1);
 %     cParam = 1;
+    %% Initiation
     %Inistiates results tables; comment out if already created
     type = {};
     sensitivity = [];
@@ -21,7 +22,8 @@ function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
         dumX.(c) = dummyvar(nominal(inputX.(c)));
     end
     dumY = dummyvar(nominal(Y));
-
+    
+  
     %% Prep Data
     %Divide into train vs test data
     trainPrecentage = .75;
@@ -36,6 +38,11 @@ function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
     testXMat = cell2mat(table2cell(testX));
     XMat = cell2mat(table2cell(dumX));
     
+    %% Feature Selection
+%     c = cvpartition(Y,'k',5);
+%     opts = statset('display','iter');
+%     inmodel = sequentialfs(@my_fun_lib,XMat,dumY(:,1),'cv',c,'options',opts);
+%     
     %% Train & Test Model
     %Train Model on TrainData, Predict with test input data & Analyze Performance
     SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -c ' num2str(cParam)]);
@@ -44,7 +51,7 @@ function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
     CP_Test = classperf(testY, labelTest);
     CP_Train = classperf(trainY, labelTrain);
     
-    do_binary_cross_validation(dumY(:,1), XMat, ['-s 0 -t 0 -c ' num2str(cParam)], 10);
+    do_binary_cross_validation(dumY(:,1), XMat, ['-s 0 -t 0 -c ' num2str(cParam)], 5);
     model = svmtrain(trainY, trainXMat);
     [labelCV, eval_ret, dec] = do_binary_predict(testY, testXMat, model);
     CP_CV = classperf(testY, labelCV);
