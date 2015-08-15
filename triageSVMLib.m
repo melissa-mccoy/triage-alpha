@@ -1,36 +1,48 @@
 % function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
+%     XY_pc_sorted = sortrows(XY_pc,'self_vs_dr');
+%     inputX = XY_pc_sorted(:,2:end);
+%     Y = XY_pc_sorted.(1);
     inputX = XY_pc(:,2:end);
     Y = XY_pc.(1);
-    cParam = 1;
-    %% Initiation
-    %Inistiates results tables; comment out if already created
-    type = {};
-    sensitivity = [];
-    specificity = [];
-    numObservations = [];
-    numFeatures = [];
-    errorRate = [];
-    meanSquaredError = [];
-    squaredCorrelation = []; 
-    correctlyClassifiedPos = [];
-    correctlyClassifiedNeg = [];
-    genError = [];
-    features = {};
-
-    %Dummify X & Y
+%     verifycvX = inputX(1:(size(dumY,1)*.25),:);
+%     verifycvX = [verifycvX; inputX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
+%     verifycvY = Y(1:(size(dumY,1)*.25),1);
+%     verifycvY = [verifycvY; Y((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
+  
+    %% Dummify X & Y
     dumX = table;
     for c = 1:size(inputX,2)
-%         features(end+1) = {unique(inputX.(c))};
         features = [features; unique(inputX.(c))];
         dumX.(c) = dummyvar(nominal(inputX.(c)));
     end
     dumY = dummyvar(nominal(Y));
     
   
-    %% Prep Data
+     %% Prep Data
+%      %Divide into cv,train,test dataset (ensure total is divisble by 8!)
+%      cvX = dumX(1:(size(dumY,1)*.25),:);
+%      cvX = [cvX; dumX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
+%      trainX = dumX((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
+%      trainX = [trainX; dumX((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
+%      testX = dumX((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
+%      testX = [testX; dumX((size(dumY,1)*.875+1):end,:)];
+% 
+%      cvY = dumY(1:(size(dumY,1)*.25),1);
+%      cvY = [cvY; dumY((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
+%      trainY = dumY((size(dumY,1)*.25+1):(size(dumY,1)*.375),1);
+%      trainY = [trainY; dumY((size(dumY,1)*.75+1):(size(dumY,1)*.875),1)];
+%      testY = dumY((size(dumY,1)*.375+1):(size(dumY,1)*.5),1);
+%      testY = [testY; dumY((size(dumY,1)*.875+1):end,1)];
+% 
+%     %Turn X's into matX's
+%     trainXMat = cell2mat(table2cell(trainX));
+%     testXMat = cell2mat(table2cell(testX));
+%     cvXMat = cell2mat(table2cell(cvX));
+%     XMat = cell2mat(table2cell(dumX));
+      
     %Divide into train vs test data
-    trainPrecentage = .75;
-    trainCutoffIndex = fix(size(dumY,1)*trainPrecentage);
+    trainPercentage = .75;
+    trainCutoffIndex = fix(size(dumY,1)*trainPercentage);
     trainX = dumX(1:trainCutoffIndex,:);
     trainY = dumY(1:trainCutoffIndex,1);
     testX = dumX((trainCutoffIndex+1):end,:);
@@ -42,16 +54,15 @@
     XMat = cell2mat(table2cell(dumX));
     
     %% Feature Selection with Matlab sequentialfs
+
     c = cvpartition(dumY(:,1),'k',5);
     opts = statset('display','iter');
     inmodel = sequentialfs(@my_fun_lib,XMat,dumY(:,1),'cv',c,'options',opts);
-    
-%    % Feature Selection with LibSVM fselect
-%     labels = dumY(:,1); % labels from the 1st column
-%     features = XMat; 
-%     features_sparse = sparse(features); % features must be in a sparse matrix
-%     libsvmwrite('SPECTFlibsvm.txt', labels, features_sparse);
-%     system('python fselect.py SPECTFlibsvm.txt');
+
+%     c = cvpartition(cvY,'k',5);
+%     opts = statset('display','iter');
+%     inmodel = sequentialfs(@my_fun_lib,cvXMat,cvY,'cv',c,'options',opts);
+%  
     
     %% Build Optimized Feature Input X
     XMat_Opt = [];
@@ -60,6 +71,13 @@
         XMat_Opt = [XMat_Opt XMat(:,f)];
        end
     end
+    
+%      cvXMat = XMat_Opt(1:(size(dumY,1)*.25),:);
+%      cvXMat = [cvXMat; XMat_Opt((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
+%      trainXMat = XMat_Opt((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
+%      trainXMat = [trainXMat; XMat_Opt((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
+%      testXMat = XMat_Opt((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
+%      testXMat = [testXMat; XMat_Opt((size(dumY,1)*.875+1):end,:)];
     
     trainXMat = XMat_Opt(1:trainCutoffIndex,:);
     testXMat = XMat_Opt((trainCutoffIndex+1):end,:);
