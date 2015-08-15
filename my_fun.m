@@ -6,5 +6,6 @@ function [ criterion ] = my_fun(trainX,trainY,testX,testY)
 
 SVMModelCV = fitcsvm(trainX,trainY,'Crossval','on','KFold',10,'Standardize',true,'KernelFunction','linear','ClassNames',{'SELF','DR'});
 criterion = kfoldLoss(SVMModelCV);
+ 
 end
 
