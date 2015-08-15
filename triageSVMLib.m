@@ -86,7 +86,7 @@
     bestcv = 0;
     for log2c = -1:3,
       for log2g = -4:1,
-        cmd = ['-v 5 -s 0 -t 0 -w-1 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
+        cmd = ['-v 5 -t 0 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
         cv = svmtrain(dumY(:,1), XMat, cmd);
         if (cv >= bestcv),
           bestcv = cv; bestc = 2^log2c; bestg = 2^log2g;
@@ -98,18 +98,29 @@
     
 %% Train & Test Model
     %Train Model on TrainData, Predict with test input data & Analyze Performance
-    SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -c ' num2str(bestc) ]);
-    [labelTest,accuracyTest,probEstimatesTest] = svmpredict(testY,testXMat,SVMModel);
-    [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel);
+    SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -b 1 -c ' num2str(bestc) ]);
+    [labelTest,accuracyTest,probEstimatesTest] = svmpredict(testY,testXMat,SVMModel,'-b 1');
+    [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel,'-b 1');
     CP_Test = classperf(testY, labelTest);
     CP_Train = classperf(trainY, labelTrain);
-    
-%     do_binary_cross_validation(dumY(:,1), XMat, ['-s 0 -t 0 -c ' num2str(cParam)], 5);
-%     model = svmtrain(trainY, trainXMat);
-%     [labelCV, eval_ret, dec] = do_binary_predict(testY, testXMat, model);
-%     CP_CV = classperf(testY, labelCV);
+%     cv = svmtrain(dumY(:,1), XMat_Opt, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
+%   cv = svmtrain(dumY(:,1), XMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
+%     cv = svmtrain(cvY, cvXMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
     
     %% Write to Results Table
+    type = {};
+    sensitivity = [];
+    specificity = [];
+    numObservations = [];
+    numFeatures = [];
+    errorRate = [];
+    meanSquaredError = [];
+    squaredCorrelation = []; 
+    correctlyClassifiedPos = [];
+    correctlyClassifiedNeg = [];
+    genError = [];
+    features = {};
+    
     type(end+1,1) = {'CP_Train'};
     numFeatures(end+1,1) = size(trainXMat,2);
     numObservations(end+1,1) = size(trainY,1);
@@ -136,7 +147,7 @@
     
     type(end+1,1) = {'CP_CV'};
     numFeatures(end+1,1) = size(XMat,2);
-    numObservations(end+1,1) = size(testY,1);
+    numObservations(end+1,1) = size(dumY,1);
     sensitivity(end+1,1) = 0;
     specificity(end+1,1) = 0;
     errorRate(end+1,1) = 0;
@@ -147,5 +158,10 @@
     correctlyClassifiedNeg(end+1,1) = 0;
 
     resultsTable = table(type,numFeatures,numObservations,errorRate,meanSquaredError,squaredCorrelation,sensitivity,specificity,correctlyClassifiedPos,correctlyClassifiedNeg,genError);
+
+    %% Give Average of Classification
+%     SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -c ' num2str(bestc) ]);
+%     [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel);
+%     
 % end
 
