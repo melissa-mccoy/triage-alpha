@@ -106,8 +106,18 @@ for c = 17:size(FeaturesTable,2)
     end
 end
 
+%% STEP4: Create X & Y inputs for triageBNTs
+% Initialize X for given pc
+XY_BNT = FeaturesTable(:,2);
+
+%Add features with >5% data within respective pcs
+for c = 17:size(FeaturesTable,2)
+    if FeaturesAnalysis.overall{c} >= .05
+        XY_BNT = [XY_BNT FeaturesTable(:,c)];
+    end
+end
 
 %% STEP5: Detect triageSVM performance on each X/Y
-
+XY_pc_SFS = FeaturesTable(:,[ 2 17 34 44 45 57 63 84 89 111 112 128 138 155 158 181 ]);
 % [resultsTable,predLabelTest,predLabelTrain] = triageSVMLib(XY_pc(:,2:end),XY_pc.(1),cParam);
 
