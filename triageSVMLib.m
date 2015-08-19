@@ -2,8 +2,16 @@
 %     XY_pc_sorted = sortrows(XY_pc,'self_vs_dr');
 %     inputX = XY_pc_sorted(:,2:end);
 %     Y = XY_pc_sorted.(1);
-    inputX = XY_pc(:,2:end);
-    Y = XY_pc.(1);
+
+    XY_pc_SFS_sorted = sortrows(XY_pc_SFS,'self_vs_dr');
+    inputX = XY_pc_SFS_sorted(:,2:end);
+    Y = XY_pc_SFS_sorted.(1);
+
+%     inputX = XY_pc_SFS(:,2:end);
+%     Y = XY_pc_SFS.(1);
+%     inputX = XY_pc(:,2:end);
+%     Y = XY_pc.(1);
+
 %     verifycvX = inputX(1:(size(dumY,1)*.25),:);
 %     verifycvX = [verifycvX; inputX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
 %     verifycvY = Y(1:(size(dumY,1)*.25),1);
@@ -19,48 +27,48 @@
     
   
      %% Prep Data
-%      %Divide into cv,train,test dataset (ensure total is divisble by 8!)
-%      cvX = dumX(1:(size(dumY,1)*.25),:);
-%      cvX = [cvX; dumX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
-%      trainX = dumX((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
-%      trainX = [trainX; dumX((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
-%      testX = dumX((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
-%      testX = [testX; dumX((size(dumY,1)*.875+1):end,:)];
-% 
-%      cvY = dumY(1:(size(dumY,1)*.25),1);
-%      cvY = [cvY; dumY((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
-%      trainY = dumY((size(dumY,1)*.25+1):(size(dumY,1)*.375),1);
-%      trainY = [trainY; dumY((size(dumY,1)*.75+1):(size(dumY,1)*.875),1)];
-%      testY = dumY((size(dumY,1)*.375+1):(size(dumY,1)*.5),1);
-%      testY = [testY; dumY((size(dumY,1)*.875+1):end,1)];
-% 
-%     %Turn X's into matX's
-%     trainXMat = cell2mat(table2cell(trainX));
-%     testXMat = cell2mat(table2cell(testX));
-%     cvXMat = cell2mat(table2cell(cvX));
-%     XMat = cell2mat(table2cell(dumX));
-      
-    %Divide into train vs test data
-    trainPercentage = .75;
-    trainCutoffIndex = fix(size(dumY,1)*trainPercentage);
-    trainX = dumX(1:trainCutoffIndex,:);
-    trainY = dumY(1:trainCutoffIndex,1);
-    testX = dumX((trainCutoffIndex+1):end,:);
-    testY = dumY((trainCutoffIndex+1):end,1);
+     %Divide into cv,train,test dataset (ensure total is divisble by 8!)
+     cvX = dumX(1:(size(dumY,1)*.25),:);
+     cvX = [cvX; dumX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
+     trainX = dumX((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
+     trainX = [trainX; dumX((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
+     testX = dumX((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
+     testX = [testX; dumX((size(dumY,1)*.875+1):end,:)];
 
-    %Turn dumXs dumYs into matDumXs 
+     cvY = dumY(1:(size(dumY,1)*.25),1);
+     cvY = [cvY; dumY((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
+     trainY = dumY((size(dumY,1)*.25+1):(size(dumY,1)*.375),1);
+     trainY = [trainY; dumY((size(dumY,1)*.75+1):(size(dumY,1)*.875),1)];
+     testY = dumY((size(dumY,1)*.375+1):(size(dumY,1)*.5),1);
+     testY = [testY; dumY((size(dumY,1)*.875+1):end,1)];
+
+    %Turn X's into matX's
     trainXMat = cell2mat(table2cell(trainX));
     testXMat = cell2mat(table2cell(testX));
+    cvXMat = cell2mat(table2cell(cvX));
     XMat = cell2mat(table2cell(dumX));
+      
+%     %Divide into train vs test data
+%     trainPercentage = .75;
+%     trainCutoffIndex = fix(size(dumY,1)*trainPercentage);
+%     trainX = dumX(1:trainCutoffIndex,:);
+%     trainY = dumY(1:trainCutoffIndex,1);
+%     testX = dumX((trainCutoffIndex+1):end,:);
+%     testY = dumY((trainCutoffIndex+1):end,1);
+% 
+%     %Turn dumXs dumYs into matDumXs 
+%     trainXMat = cell2mat(table2cell(trainX));
+%     testXMat = cell2mat(table2cell(testX));
+%     XMat = cell2mat(table2cell(dumX));
     
     %% Feature Selection with Matlab sequentialfs
 
     c = cvpartition(dumY(:,1),'k',5);
-    opts = statset('display','iter');
-    inmodel = sequentialfs(@my_fun_lib,XMat,dumY(:,1),'cv',c,'options',opts);
+    stream = RandStream('mrg32k3a','Seed',5489);
+    opts = statset('display','iter','Streams',stream);
+    inmodel = sequentialfs(@my_fun_lib,XMat,dumY(:,1),'cv',c,'mcreps',5,'options',opts);
 
 %     c = cvpartition(cvY,'k',5);
-%     opts = statset('display','iter');
 %     inmodel = sequentialfs(@my_fun_lib,cvXMat,cvY,'cv',c,'options',opts);
 %  
     
@@ -72,15 +80,15 @@
        end
     end
     
-%      cvXMat = XMat_Opt(1:(size(dumY,1)*.25),:);
-%      cvXMat = [cvXMat; XMat_Opt((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
-%      trainXMat = XMat_Opt((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
-%      trainXMat = [trainXMat; XMat_Opt((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
-%      testXMat = XMat_Opt((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
-%      testXMat = [testXMat; XMat_Opt((size(dumY,1)*.875+1):end,:)];
+     cvXMat = XMat_Opt(1:(size(dumY,1)*.25),:);
+     cvXMat = [cvXMat; XMat_Opt((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
+     trainXMat = XMat_Opt((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
+     trainXMat = [trainXMat; XMat_Opt((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
+     testXMat = XMat_Opt((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
+     testXMat = [testXMat; XMat_Opt((size(dumY,1)*.875+1):end,:)];
     
-    trainXMat = XMat_Opt(1:trainCutoffIndex,:);
-    testXMat = XMat_Opt((trainCutoffIndex+1):end,:);
+%     trainXMat = XMat_Opt(1:trainCutoffIndex,:);
+%     testXMat = XMat_Opt((trainCutoffIndex+1):end,:);
    
     %% Select Best Hyperparameters (C & Gamma) with Cross Validation
     bestcv = 0;
@@ -103,7 +111,15 @@
     [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel,'-b 1');
     CP_Test = classperf(testY, labelTest);
     CP_Train = classperf(trainY, labelTrain);
-%     cv = svmtrain(dumY(:,1), XMat_Opt, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
+    %Correct Way to Evaluate Performance as described here
+    %(http://www.mathworks.com/examples/statistics/2229-selecting-features-for-classifying-high-dimensional-data#6)
+%     c = cvpartition(dumY(:,1),'k',5);
+%     cv = transpose(crossval(@my_fun_lib,XMat,dumY(:,1),'partition',c))/c.TestSize;
+    c = cvpartition(cvY,'k',5);    
+    cv = transpose(crossval(@my_fun_lib,cvXMat,cvY,'partition',c))/c.TestSize;
+
+    
+    %     cv = svmtrain(dumY(:,1), XMat_Opt, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
 %   cv = svmtrain(dumY(:,1), XMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
 %     cv = svmtrain(cvY, cvXMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
     
@@ -151,7 +167,7 @@
     sensitivity(end+1,1) = 0;
     specificity(end+1,1) = 0;
     errorRate(end+1,1) = 0;
-    genError(end+1,1) = (100-cv);
+    genError(end+1,1) = cv;
     meanSquaredError(end+1,1) = 0;
     squaredCorrelation(end+1,1) = 0;
     correctlyClassifiedPos(end+1,1) = 0;

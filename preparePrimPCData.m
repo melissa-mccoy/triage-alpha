@@ -95,7 +95,7 @@ for c = 17:size(FeaturesTable,2)
     FeaturesAnalysis.overall{c} = (pcOverall-pcMissing)/pcOverall;
 end
 
-%% STEP3.3: Create X (comprised of features with >50% comlete data) & Y inputs for top 10 PCs and overall
+%% STEP4: Create X & Y inputs for triageSVMLib
 % Initialize X for given pc
 XY_pc = FeaturesTable(:,[2 15:16]);
 
