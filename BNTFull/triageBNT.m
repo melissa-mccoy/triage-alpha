@@ -6,8 +6,10 @@ num_cases = size(Data,2);
 node_sizes = zeros(1,num_nodes);
 node_names = XY_BNT.Properties.VariableNames;
 node_choices = cell(1,num_nodes);
+node_types = cell(1,num_nodes); node_types(:) = {'tabular'};
 DataNum = zeros(size(Data,1),size(Data,2));
 
+% Achieves the same thing as grp2idx(featureVector)
 for r = 1:num_nodes
     this_node_choices = unique(Data(r,:));
     eval(['node_choices.' node_names{r} ' = this_nodes_choices;'])
@@ -30,110 +32,43 @@ num_cases_test = (num_cases-test_index+1);
 
 %% K2+T (Class Node is at Root - a Cause)
 % Train
-tMWST = learn_struct_mwst(train_data, ones(num_nodes,1), node_sizes, 'tabular', 'mutual_info', 1);
+tMWST = learn_struct_mwst(train_data, ones(num_nodes,1), node_sizes, node_types, 'mutual_info', 1);
 orderKTCause = topological_sort(full(tMWST));
-dagKTCause = learn_struct_K2(train_data, node_sizes, orderKTCause);
-bnetKTCause = mk_bnet(dagKTCause, node_sizes);
+dagKTCause = learn_struct_K2(train_data, node_sizes, orderKTCause,'scoring_fn','bic','verbose','yes');
+bnetKTCause = mk_bnet(dagKTCause, node_sizes,'names',node_names);
+rand('state', 0);
 for n = 1:num_nodes
-    bnetKTCause.CPD{n} = tabular_CPD(bnetKTCause, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
+    bnetKTCause.CPD{n} = tabular_CPD(bnetKTCause, n);
 end
 bnetKTCause = bayes_update_params(bnetKTCause, train_data);
-
 % Test
-posProbs = [];
-for c = 1:num_cases_test
-    disp(c);
-    evidence = {};
-    for n = 2:num_nodes
-        evidence{n} = test_data(n,c);
-    end
-    engine = jtree_inf_engine(bnetKTCause);
-    [engine, loglik] = enter_evidence(engine, evidence);
-    m = marginal_nodes(engine, 1);
-    posProbs(end+1) = m.T(1);
-end
-
-%% Calculate Performance
-threshold = .2;
-predLabels = zeros(1,size(posProbs,2)); predLabels(:) = 2; predLabels(posProbs >= threshold) = 1;
-actLabels = test_data(1,:);
-errRate = sum(predLabels ~= actLabels)/num_cases_test;
-truPos = 0; truNeg = 0; falPos = 0; falNeg = 0; count = 0;
-for l=1:num_cases_test
-    if actLabels(l) == 1
-        if predLabels(l) == actLabels(l)
-            truPos = truPos + 1;
-        else
-           falNeg = falNeg + 1;
-        end
-    elseif actLabels(l) == 2
-        if predLabels(l) == actLabels(l)
-            truNeg = truNeg + 1;
-        else
-            falPos = falPos + 1;
-        end
-    end
-end
-sens = truPos/(truPos+falNeg);
-spec = truNeg/(truNeg+falPos);
-BNTResults = [errRate, sens, spec];
-plot(actLabels, posProbs, 'X');
+threshold = .4;
+BNTResults = bnt_performance(bnetKTCause,test_data,threshold);
+% View
+view(biograph(bnetKTCause.dag,node_names));
 
 %% K2-T (Class Node is at End - a Consequence)
 % Learn Structure
-tMWST = learn_struct_mwst(train_data, ones(num_nodes,1), node_sizes, 'tabular', 'mutual_info', 1);
+tMWST = learn_struct_mwst(train_data, ones(num_nodes,1), node_sizes, node_types, 'mutual_info', 1);
 order = topological_sort(full(tMWST));
 orderKTConseq = order(size(order,2):-1:1);
-dagKTConseq = learn_struct_K2(train_data, node_sizes, orderKTConseq);
-bnetKTConseq = mk_bnet(dagKTConseq, node_sizes);
+dagKTConseq = learn_struct_K2(train_data, node_sizes, orderKTConseq,'verbose','yes');
+bnetKTConseq = mk_bnet(dagKTConseq, node_sizes,'names',node_names);
 for n = 1:num_nodes
     bnetKTConseq.CPD{n} = tabular_CPD(bnetKTConseq, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
 end
 % Learn Parameters
 bnetKTConseq = bayes_update_params(bnetKTConseq, train_data);
-
-% Test Performance
-posProbs = [];
-for c = 1:num_cases_test
-    disp(c);
-    evidence = {};
-    for n = 2:num_nodes
-        evidence{n} = test_data(n,c);
-    end
-    engine = jtree_inf_engine(bnetKTConseq);
-    [engine, loglik] = enter_evidence(engine, evidence);
-    m = marginal_nodes(engine, 1);
-    posProbs(end+1) = m.T(1);
-end
-% Calculate Performance
-threshold = .25;
-predLabels = zeros(1,size(posProbs,2)); predLabels(:) = 2; predLabels(posProbs >= threshold) = 1;
-actLabels = test_data(1,:);
-errRate = sum(predLabels ~= actLabels)/num_cases_test;
-truPos = 0; truNeg = 0; falPos = 0; falNeg = 0; count = 0;
-for l=1:num_cases_test
-    if actLabels(l) == 1
-        if predLabels(l) == actLabels(l)
-            truPos = truPos + 1;
-        else
-           falNeg = falNeg + 1;
-        end
-    elseif actLabels(l) == 2
-        if predLabels(l) == actLabels(l)
-            truNeg = truNeg + 1;
-        else
-            falPos = falPos + 1;
-        end
-    end
-end
-sens = truPos/(truPos+falNeg);
-spec = truNeg/(truNeg+falPos);
-BNTResults = [errRate, sens, spec];
+% Test
+threshold = .4;
+BNTResults = bnt_performance(bnetKTConseq,test_data,threshold);
+% Draw
+view(biograph(bnetKTConseq.dag,node_names));
 
 %% Naive Bayes (assumes all features are independent) 
 % Creat Struct
 dagNB = mk_naive_struct(num_nodes,1);
-bnetNB = mk_bnet(dagNB, node_sizes);
+bnetNB = mk_bnet(dagNB, node_sizes,'names',node_names);
 for n = 1:num_nodes
     bnetNB.CPD{n} = tabular_CPD(bnetNB, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
 end
@@ -142,12 +77,14 @@ bnetNB = bayes_update_params(bnetNB, train_data);
 % Test
 threshold = .4;
 BNTResults = bnt_performance(bnetNB,test_data,threshold);
+% Draw
+view(biograph(bnetNB.dag,node_names));
 
 %% Augmented Naive Bayes (learns structure using MWST algorithm)
 % Learn Struct
 train_data_cc = [train_data; ones(1,num_cases_train)];
 node_sizes_cc = [node_sizes 1];
-dagNBA = learn_struct_tan(train_data_cc, 1, (num_nodes+1), node_sizes_cc,'mutual_info');
+dagNBA = learn_struct_tan(train_data_cc, 1, (num_nodes+1), node_sizes_cc,'bic');
 bnetNBA = mk_bnet(dagNBA, node_sizes_cc);
 for n = 1:(num_nodes+1)
     bnetNBA.CPD{n} = tabular_CPD(bnetNBA, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
@@ -173,7 +110,7 @@ mcmc_post = mcmc_sample_to_hist(sampled_graphs, dags);
 % Learn Structure
 PDAG = learn_struct_pdag_pc('cond_indep_chisquare', num_nodes, num_nodes-2, train_data);
 dagPC = cpdag_to_dag(PDAG);
-bnetPC = mk_bnet(dagPC, node_sizes);
+bnetPC = mk_bnet(dagPC, node_sizes,'names',node_names);
 for n = 1:num_nodes
     bnetPC.CPD{n} = tabular_CPD(bnetPC, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
 end
@@ -184,7 +121,7 @@ threshold = .4;
 BNTResults = bnt_performance(bnetPC,test_data,threshold);
 %% BNPC
 dagBNPC = learn_struct_bnpc(train_data);
-bnetBNPC = mk_bnet(dagBNPC, node_sizes);
+bnetBNPC = mk_bnet(dagBNPC, node_sizes,'names',node_names);
 for n = 1:num_nodes
     bnetBNPC.CPD{n} = tabular_CPD(bnetBNPC, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
 end
@@ -196,7 +133,7 @@ BNTResults = bnt_performance(bnetBNPC,test_data,threshold);
 %% IC
 PDAG = learn_struct_pdag_ic_star('cond_indep_chisquare', num_nodes, num_nodes-2, Data);
 dagIC = cpdag_to_dag(PDAG);
-bnetIC = mk_bnet(dagIC, node_sizes);
+bnetIC = mk_bnet(dagIC, node_sizes,'names',node_names);
 for n = 1:num_nodes
     bnetIC.CPD{n} = tabular_CPD(bnetIC, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');
 end
@@ -236,7 +173,7 @@ BNTResults = bnt_performance(bnetGSM,test_data,threshold);
 %% Structural EM
 DataNan = ;
 dagSEM = zeros(num_nodes,num_nodes);
-bnetSEM = mk_bnet(dagSEM, node_sizes);
+bnetSEM = mk_bnet(dagSEM, node_sizes,'names',node_names);
 bnetSEM = learn_struct_EM(bnetSEM, DataNan, 10);
 for n = 1:num_nodes
     bnetSEM.CPD{n} = tabular_CPD(bnetSEM, n, 'CPT', 'unif', 'dirichlet_weight', 1, 'dirichlet_type', 'unif');

@@ -49,8 +49,18 @@ else
   else
     data = [pev; self_ev];
   end
-  %MLM Aug19 Changed diralect to CPT except for final CPD.CPT on line 55
+  %MLM Aug19 Changed dirichlet to CPT except for final on 
   counts = compute_counts(data, sz);
-  CPD.CPT = CPD.CPT + counts;
-  CPD.CPT = mk_stochastic(CPD.CPT);
+  disp('Counts');
+  disp(counts);
+  disp('CPD.dirichlet');
+  disp(CPD.dirichlet);
+  disp('CPD');
+  disp(CPD);
+  if ~exist(CPD.dirichlet)
+    CPD.dirichlet = counts;
+  else
+    CPD.dirichlet = CPD.dirichlet + counts;
+  end
+  CPD.CPT = mk_stochastic(CPD.dirichlet);
 end

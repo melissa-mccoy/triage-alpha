@@ -29,7 +29,6 @@ end
 for i=1:n
   e = bnet.equiv_class(i);
   disp(e);
-  % Commented out MLM Aug 15, 2015
   if adjustable_CPD(bnet.CPD{e})
     u = find(clamped(i,:)==0);
     ps = parents(bnet.dag, i);
