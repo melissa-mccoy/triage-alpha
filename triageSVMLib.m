@@ -1,101 +1,113 @@
 % function [resultsTable,labelTest, labelTrain] = triageSVMLib(inputX,Y,cParam)
-%     XY_pc_sorted = sortrows(XY_pc,'self_vs_dr');
-%     inputX = XY_pc_sorted(:,2:end);
-%     Y = XY_pc_sorted.(1);
 
-    XY_pc_SFS_sorted = sortrows(XY_pc_SFS,'self_vs_dr');
-    inputX = XY_pc_SFS_sorted(:,2:end);
-    Y = XY_pc_SFS_sorted.(1);
-
-%     inputX = XY_pc_SFS(:,2:end);
-%     Y = XY_pc_SFS.(1);
-%     inputX = XY_pc(:,2:end);
-%     Y = XY_pc.(1);
-
-%     verifycvX = inputX(1:(size(dumY,1)*.25),:);
-%     verifycvX = [verifycvX; inputX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
-%     verifycvY = Y(1:(size(dumY,1)*.25),1);
-%     verifycvY = [verifycvY; Y((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
-  
-    %% Dummify X & Y
+    %% Prep Data
+%     % Turn X and Y into numbers
+%     numXY_pc = table;
+%     for c=1:size(XY_pc,2)
+%         numXY_pc.(c) = grp2idx(XY_pc.(c));
+%     end
+%     
+%     inputX = numXY_pc(:,2:end);
+%     Y = numXY_pc.(1);
+%     dumY = dummyvar(nominal(Y));
+%     YMat = dumY(:,1);
+%     XMat = cell2mat(table2cell(numXY_pc(:,2:end)));
+    
+    % Dummify X and Y
+    inputX = XY_pc(:,2:end);
+    Y = XY_pc.(1);
     dumX = table;
+    features = [];
     for c = 1:size(inputX,2)
         features = [features; unique(inputX.(c))];
         dumX.(c) = dummyvar(nominal(inputX.(c)));
     end
     dumY = dummyvar(nominal(Y));
-    
-  
-     %% Prep Data
-     %Divide into cv,train,test dataset (ensure total is divisble by 8!)
-     cvX = dumX(1:(size(dumY,1)*.25),:);
-     cvX = [cvX; dumX((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
-     trainX = dumX((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
-     trainX = [trainX; dumX((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
-     testX = dumX((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
-     testX = [testX; dumX((size(dumY,1)*.875+1):end,:)];
-
-     cvY = dumY(1:(size(dumY,1)*.25),1);
-     cvY = [cvY; dumY((size(dumY,1)*.5+1):(size(dumY,1)*.75),1)];
-     trainY = dumY((size(dumY,1)*.25+1):(size(dumY,1)*.375),1);
-     trainY = [trainY; dumY((size(dumY,1)*.75+1):(size(dumY,1)*.875),1)];
-     testY = dumY((size(dumY,1)*.375+1):(size(dumY,1)*.5),1);
-     testY = [testY; dumY((size(dumY,1)*.875+1):end,1)];
-
-    %Turn X's into matX's
-    trainXMat = cell2mat(table2cell(trainX));
-    testXMat = cell2mat(table2cell(testX));
-    cvXMat = cell2mat(table2cell(cvX));
-    XMat = cell2mat(table2cell(dumX));
-      
-%     %Divide into train vs test data
-%     trainPercentage = .75;
-%     trainCutoffIndex = fix(size(dumY,1)*trainPercentage);
-%     trainX = dumX(1:trainCutoffIndex,:);
-%     trainY = dumY(1:trainCutoffIndex,1);
-%     testX = dumX((trainCutoffIndex+1):end,:);
-%     testY = dumY((trainCutoffIndex+1):end,1);
-% 
-%     %Turn dumXs dumYs into matDumXs 
-%     trainXMat = cell2mat(table2cell(trainX));
-%     testXMat = cell2mat(table2cell(testX));
-%     XMat = cell2mat(table2cell(dumX));
-    
-    %% Feature Selection with Matlab sequentialfs
-
-    c = cvpartition(dumY(:,1),'k',5);
-    stream = RandStream('mrg32k3a','Seed',5489);
-    opts = statset('display','iter','Streams',stream);
-    inmodel = sequentialfs(@my_fun_lib,XMat,dumY(:,1),'cv',c,'mcreps',5,'options',opts);
-
-%     c = cvpartition(cvY,'k',5);
-%     inmodel = sequentialfs(@my_fun_lib,cvXMat,cvY,'cv',c,'options',opts);
-%  
-    
-    %% Build Optimized Feature Input X
-    XMat_Opt = [];
-    for f = 1:size(inmodel,2)
-       if inmodel(f) == 1
-        XMat_Opt = [XMat_Opt XMat(:,f)];
-       end
-    end
-    
-     cvXMat = XMat_Opt(1:(size(dumY,1)*.25),:);
-     cvXMat = [cvXMat; XMat_Opt((size(dumY,1)*.5+1):(size(dumY,1)*.75),:)];
-     trainXMat = XMat_Opt((size(dumY,1)*.25+1):(size(dumY,1)*.375),:);
-     trainXMat = [trainXMat; XMat_Opt((size(dumY,1)*.75+1):(size(dumY,1)*.875),:)];
-     testXMat = XMat_Opt((size(dumY,1)*.375+1):(size(dumY,1)*.5),:);
-     testXMat = [testXMat; XMat_Opt((size(dumY,1)*.875+1):end,:)];
-    
-%     trainXMat = XMat_Opt(1:trainCutoffIndex,:);
-%     testXMat = XMat_Opt((trainCutoffIndex+1):end,:);
    
+    XMat = cell2mat(table2cell(dumX));
+    YMat = dumY(:,1);
+    
+
+    %% Feature Selection
+    
+    % FILTER: Relief
+    relieff(XMat,YMat,10,'method','classification');
+    
+    % FILTER+WRAPPER: Remove Most Correlated Features Until Reach Model Error Minimum
+    featuresIdxSortbyC = zeros(1,size(XMat,2));
+    XMatCorr = XMat;
+    leaveoutCVP = cvpartition(YMat,'LeaveOut');
+    errVals = [];
+    xVals = [];
+    for f=1:size(XMat,2)
+        [~,idx] = max(mean(abs(corr(XMatCorr))));
+        featuresIdxSortbyC(f) = idx;
+        XMatCorr(:,idx) = [];
+        if mod(f,4) == 0 
+            xVals(end+1) = f;
+            errVals(end+1) = transpose(crossval(@my_fun_lib,XMatCorr,YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+        end
+    end 
+    plot(xVals, errVals,'o');
+    xlabel('Number of Features');
+    ylabel('MCE');
+    title('Correlation-based Remove Features vs LOO MCE'); % Removing 104 gives lowest error
+    % ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
+    fs2 = featuresIdxSortbyC(105:end);
+    fsLocalCorr = sequentialfs(@my_fun_lib,XMat(:,fs2),YMat,'cv',leaveoutCVP);
+    testMCECorr = transpose(crossval(@my_fun_lib,XMat(:,fs2(fsLocalCorr)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205
+    
+    % FILTER+WRAPPER: Add Most Predictive Features Until Reach Model Error Minimum
+    drCases = XMat(YMat==1,:);
+    selfCases = XMat(YMat==0,:);
+    [h,p,ci,stat] = ttest2(drCases,selfCases,'Vartype','unequal');
+    ecdf(p);
+    xlabel('P value'); ylabel('CDF value'); % Shows ~80% of features have p-val<.5 and ~20% have pval ~= 0
+    % Determine which features to include by plotting classfication error rate of svm with leave-out-1 cross validation against num of features (added in their p order)
+    [~,featureIdxSortbyP] = sort(p,2); % sort the features
+    testMCE = zeros(1,10);
+    resubMCE = zeros(1,10);
+    nfs = 80:5:125;
+    leaveoutCVP = cvpartition(YMat,'LeaveOut'); 
+    resubCVP = cvpartition(length(YMat),'resubstitution');
+    for i = 1:10
+       fs = featureIdxSortbyP(1:nfs(i));
+       testMCE(i) = transpose(crossval(@my_fun_lib,XMat(:,fs),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+       resubMCE(i) = crossval(@my_fun_lib,XMat(:,fs),YMat,'partition',resubCVP)/resubCVP.TestSize;
+    end
+    plot(nfs, testMCE,'o',nfs,resubMCE,'r^');
+    xlabel('Number of Features Removed');
+    ylabel('MCE');
+    legend({'MCE on the test set' 'Resubstitution MCE'},'location','NW');
+    title('Simple Filter Feature Selection Method');
+    % Plot shows that 110 features gives 12.05% testMCE which are
+    featureIdxSortbyP(1:110)
+    % ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
+    fs1 = featureIdxSortbyP(1:110);
+    fsLocal = sequentialfs(@my_fun_lib,XMat(:,fs1),YMat,'cv',leaveoutCVP);
+    testMCELocal = transpose(crossval(@my_fun_lib,XMat(:,fs1(fsLocal)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205 & 16 Features
+    % Make sure it didn't stop prematurely and make it go to 50
+    [fsCVfor50,historyCV] = sequentialfs(@my_fun_lib,XMat(:,fs1),YMat,'cv',leaveoutCVP,'Nf',50);
+    [fsResubfor50,historyResub] = sequentialfs(@my_fun_lib,XMat(:,fs1),YMat,'cv','resubstitution','Nf',50);
+    plot(1:50, historyCV.Crit,'bo',1:50, historyResub.Crit,'r^');
+    xlabel('Number of Features'); ylabel('MCE');
+    legend({'Leave-1-Out CV MCE' 'Resubstitution MCE'},'location','NE');
+    %   If find in plot a better error, calculate fcount performance below
+    %     fsCVfor38 = fs1(historyCV.In(38,:))
+    %     [orderlist,ignore] = find( [historyCV.In(1,:); diff(historyCV.In(1:38,:) )]' );
+    %     testMCECVfor38 = transpose(crossval(@my_fun_lib,XMat(:,fsCVfor38),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize
+    
+    % WRAPPER: Sequential Features Selection
+    % Apply SFS Across all 345 Features Using Leaveout One CV
+    inmodel = sequentialfs(@my_fun_lib,XMat,YMat,'cv',leaveoutCVP);
+    fullSFSError = transpose(crossval(@my_fun_lib,XMat(:,inmodel),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205 & 16 Features
+    
     %% Select Best Hyperparameters (C & Gamma) with Cross Validation
     bestcv = 0;
-    for log2c = -1:3,
-      for log2g = -4:1,
-        cmd = ['-v 5 -t 0 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
-        cv = svmtrain(dumY(:,1), XMat, cmd);
+    for log2c = -1:3
+      for log2g = -4:1
+        cmd = ['-v 5 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
+        cv = svmtrain(YMat, XMat, cmd);
         if (cv >= bestcv),
           bestcv = cv; bestc = 2^log2c; bestg = 2^log2g;
         end
@@ -106,78 +118,35 @@
     
 %% Train & Test Model
     %Train Model on TrainData, Predict with test input data & Analyze Performance
-    SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -b 1 -c ' num2str(bestc) ]);
-    [labelTest,accuracyTest,probEstimatesTest] = svmpredict(testY,testXMat,SVMModel,'-b 1');
-    [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel,'-b 1');
-    CP_Test = classperf(testY, labelTest);
-    CP_Train = classperf(trainY, labelTrain);
-    %Correct Way to Evaluate Performance as described here
-    %(http://www.mathworks.com/examples/statistics/2229-selecting-features-for-classifying-high-dimensional-data#6)
-%     c = cvpartition(dumY(:,1),'k',5);
-%     cv = transpose(crossval(@my_fun_lib,XMat,dumY(:,1),'partition',c))/c.TestSize;
-    c = cvpartition(cvY,'k',5);    
-    cv = transpose(crossval(@my_fun_lib,cvXMat,cvY,'partition',c))/c.TestSize;
-
-    
-    %     cv = svmtrain(dumY(:,1), XMat_Opt, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
-%   cv = svmtrain(dumY(:,1), XMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
-%     cv = svmtrain(cvY, cvXMat, ['-v 5 -s 0 -t 0 -c ' num2str(bestc) ]);
-    
-    %% Write to Results Table
-    type = {};
-    sensitivity = [];
-    specificity = [];
-    numObservations = [];
-    numFeatures = [];
-    errorRate = [];
-    meanSquaredError = [];
-    squaredCorrelation = []; 
-    correctlyClassifiedPos = [];
-    correctlyClassifiedNeg = [];
-    genError = [];
-    features = {};
-    
-    type(end+1,1) = {'CP_Train'};
-    numFeatures(end+1,1) = size(trainXMat,2);
-    numObservations(end+1,1) = size(trainY,1);
-    sensitivity(end+1,1) = CP_Train.Sensitivity;
-    specificity(end+1,1) = CP_Train.Specificity;
-    errorRate(end+1,1) = (100-accuracyTrain(1));
-    meanSquaredError(end+1,1) = accuracyTrain(2);
-    squaredCorrelation(end+1,1) = accuracyTrain(3);
-    correctlyClassifiedPos(end+1,1) = CP_Train.PositivePredictiveValue;
-    correctlyClassifiedNeg(end+1,1) = CP_Train.NegativePredictiveValue;
-    genError(end+1,1) = 0;
-
-    type(end+1,1) = {'CP_Test'};
-    numFeatures(end+1,1) = size(testXMat,2);
-    numObservations(end+1,1) = size(testY,1);
-    sensitivity(end+1,1) = CP_Test.Sensitivity;
-    specificity(end+1,1) = CP_Test.Specificity;
-    errorRate(end+1,1) = (100-accuracyTest(1));
-    meanSquaredError(end+1,1) = accuracyTest(2);
-    squaredCorrelation(end+1,1) = accuracyTest(3);
-    correctlyClassifiedPos(end+1,1) = CP_Test.PositivePredictiveValue;
-    correctlyClassifiedNeg(end+1,1) = CP_Test.NegativePredictiveValue;
-    genError(end+1,1) = 0;
-    
-    type(end+1,1) = {'CP_CV'};
-    numFeatures(end+1,1) = size(XMat,2);
-    numObservations(end+1,1) = size(dumY,1);
-    sensitivity(end+1,1) = 0;
-    specificity(end+1,1) = 0;
-    errorRate(end+1,1) = 0;
-    genError(end+1,1) = cv;
-    meanSquaredError(end+1,1) = 0;
-    squaredCorrelation(end+1,1) = 0;
-    correctlyClassifiedPos(end+1,1) = 0;
-    correctlyClassifiedNeg(end+1,1) = 0;
-
-    resultsTable = table(type,numFeatures,numObservations,errorRate,meanSquaredError,squaredCorrelation,sensitivity,specificity,correctlyClassifiedPos,correctlyClassifiedNeg,genError);
-
-    %% Give Average of Classification
-%     SVMModel = svmtrain(trainY, trainXMat,['-s 0 -t 0 -c ' num2str(bestc) ]);
-%     [labelTrain,accuracyTrain,probEstimatesTrain] = svmpredict(trainY,trainXMat,SVMModel);
-%     
-% end
-
+    leaveoutCVP = cvpartition(YMat,'LeaveOut');
+    tenfoldCVP = cvpartition(YMat,'k',10);
+    cvLeaveout = crossval(@my_fun_lib,XMat,YMat,'partition',leaveoutCVP);
+    leaveoutError = transpose(cvLeaveout)/leaveoutCVP.TestSize;
+    predictLabels = zeros(length(cvLeaveout),1);
+    truePos = 0; trueNeg = 0; falsePos = 0; falseNeg = 0;
+    for t=1:length(cvLeaveout)
+        if cvLeaveout(t) == 1
+            if YMat(t) == 1
+                falseNeg = falseNeg + 1;
+                predictLabels(t) = 0;
+            else
+                falsePos = falsePos + 1;
+                predictLabels(t) = 1;
+            end
+        else
+            predictLabels(t) = YMat(t);
+            if YMat(t) == 1
+                truePos = truePos + 1;
+            else
+                trueNeg = trueNeg + 1;
+            end
+        end
+    end
+    sensLeaveout = truePos/(truePos+falseNeg);
+    specLeaveout = trueNeg/(trueNeg+falsePos);
+    leaveoutResults = [leaveoutError, sensLeaveout, specLeaveout]; 
+	[X,Y,T,leavoutAUC] = perfcurve(YMat,predictLabels,1);
+    plot(X,Y)
+    xlabel('False positive rate')
+    ylabel('True positive rate')
+    title('ROC for Classification by SVM LOO')
