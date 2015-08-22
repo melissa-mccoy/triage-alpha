@@ -1,17 +1,24 @@
 function [ criterion ] = my_fun_lib(trainX,trainY,testX,testY)
 
-    bestc = '1';
-    model = svmtrain(trainY, trainX,['-s 0 -t 0 -c ' bestc]);
+    % Chose c range base on http://www.gatsby.ucl.ac.uk/aistats/fullpapers/198.pdf
+    % and http://www.csie.ntu.edu.tw/~cjlin/papers/guide/guide.pdf
+%     bestcv = 0;
+%     for log2c = -1:3
+%       for log2g = -4:1
+%         cmd = ['-v 5 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
+%         cv = svmtrain(trainY, trainX, cmd);
+%         if (cv >= bestcv),
+%           bestcv = cv; bestc = 2^log2c; bestg = 2^log2g;
+%         end
+%         fprintf('%g %g %g (best c=%g, g=%g, rate=%g)\n', log2c, log2g, cv, bestc, bestg, bestcv);
+%       end
+%     end
+    bestc = 1;
+%     bestg = 0.0625;
+%     neg_size = sum(trainY == 0);
+%     pos_size = sum(trainY == 1);
+    model = svmtrain(trainY, trainX,['-s 0 -t 0 -c ' num2str(bestc) ]);
     criterion = sum(svmpredict(testY, testX, model) ~= testY);
-
-%     SVMModel = svmtrain(trainY, trainX,['-s 0 -t 0 -c ' bestc]);
-%     [labelTest,accuracyTest,probEstimatesTest] = svmpredict(testY,testX,SVMModel);
-%     criterion = (100-accuracyTest(1));
-%     disp(['trainY: ' num2str(size(trainY,1))]);
-%     disp(['trainX: ' num2str(size(trainX,1)) ' x ' num2str(size(trainX,2))]);
-%     disp(['testY: ' num2str(size(testY,1))]);
-%     disp(['testX: ' num2str(size(testX,1)) ' x ' num2str(size(testX,2))]);
-%     disp(['labelTest: ' num2str(size(labelTest,1))]);
-%    
+    
 end
 
