@@ -33,6 +33,24 @@
     % FILTER: Relief
     relieff(XMat,YMat,10,'method','classification');
     
+    % FILTER: mRMR
+    % MID
+    feaMID = mrmr_mid_d(XMat,YMat,50);
+    % MIQ
+    feaMIO = mrmr_miq_d(XMat,YMat,50);
+    
+    for m=1:4:size(1,feaMID)
+        xMIVals(end+1) = m;
+        midErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(feaMID(1:m)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+        mioErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(feaMIO(1:m)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+    end
+    
+    plot(xMIVals, midErrVals,'o',xMIVals,mioErrVals,'r^');
+    xlabel('Number of Features');
+    ylabel('MCE');
+    legend({'MCE for MID scheme' 'MCE for MIO scheme'},'location','NW');
+    title('mRMR Feature Selection with LOO SVM MCE');
+    
     % FILTER+WRAPPER: Remove Most Correlated Features Until Reach Model Error Minimum
     featuresIdxSortbyC = zeros(1,size(XMat,2));
     XMatCorr = XMat;
@@ -52,12 +70,12 @@
     xlabel('Number of Features');
     ylabel('MCE');
     title('Correlation-based Remove Features vs LOO MCE'); % Removing 104 gives lowest error
-    % ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
+    %% ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
     fs2 = featuresIdxSortbyC(105:end);
-    fsLocalCorr = sequentialfs(@my_fun_lib,XMat(:,fs2),YMat,'cv',leaveoutCVP);
+    fsLocalCorr = sequentialfs(@my_fun_lib,XMat(:,fs2),YMat,'cv',leaveoutCVP,'Nf',50);
     testMCECorr = transpose(crossval(@my_fun_lib,XMat(:,fs2(fsLocalCorr)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205
     
-    % FILTER+WRAPPER: Add Most Predictive Features Until Reach Model Error Minimum
+    %% FILTER+WRAPPER: Add Most Predictive Features Until Reach Model Error Minimum
     drCases = XMat(YMat==1,:);
     selfCases = XMat(YMat==0,:);
     [h,p,ci,stat] = ttest2(drCases,selfCases,'Vartype','unequal');
