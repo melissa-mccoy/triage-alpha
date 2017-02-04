@@ -36,12 +36,10 @@ end
 % dumX = transpose(dumX);
 % dumY = transpose(dumY);
 
-%% Initiate Network
-net = patternnet(10);
-
-%% Train Network
+%% Initiate & Train Network
+net = patternnet(5);
 [net,tr] = train(net,MatX,MatY);
 nntraintool
 plotperform(tr)
 
-%Best VAl Performance is .34
+%Best VAl Performance is .18

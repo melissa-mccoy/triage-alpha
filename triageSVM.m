@@ -32,6 +32,8 @@
     trainXMat = cell2mat(table2cell(trainX));
     testXMat = cell2mat(table2cell(testX));
     XMat = cell2mat(table2cell(dumX));
+    
+    
 
      %% Feature Selection
     c = cvpartition(Y,'k',5);

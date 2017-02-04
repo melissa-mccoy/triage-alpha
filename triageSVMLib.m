@@ -14,8 +14,8 @@
 %     XMat = cell2mat(table2cell(numXY_pc(:,2:end)));
     
     % Dummify X and Y
-    inputX = XY_pc(:,2:end);
-    Y = XY_pc.(1);
+    inputX = XY_pc_throat(:,2:end);
+    Y = XY_pc_throat.(1);
     dumX = table;
     features = [];
     for c = 1:size(inputX,2)
@@ -29,29 +29,62 @@
     
 
     %% Feature Selection
-    
-    % FILTER: Relief
-    relieff(XMat,YMat,10,'method','classification');
-    
-    % FILTER: mRMR
-    % MID
-    feaMID = mrmr_mid_d(XMat,YMat,50);
-    % MIQ
-    feaMIO = mrmr_miq_d(XMat,YMat,50);
-    
-    for m=1:4:size(1,feaMID)
-        xMIVals(end+1) = m;
-        midErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(feaMID(1:m)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
-        mioErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(feaMIO(1:m)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+  
+    %% FILTER: Relief
+        stdWeights = []; meanWeights = []; xVals = [];
+    for K=100:10:200
+        [reliefRank, reliefWeights] = relieff(XMat,YMat,K,'method','classification');
+        stdWeights(end+1) = std(reliefWeights);
+        meanWeights(end+1) = mean(reliefWeights);
+        xVals(end+1) = K;
     end
-    
+    [minVal minIndex] = min(stdWeights);
+    bestK = xVals(minIndex);
+    %% Calculate rank and weights
+    [reliefRank, reliefWeights] = relieff(XMat,YMat,150,'method','classification','categoricalx','on');
+    bar(reliefWeights(reliefRank));
+    xlabel('Predictor rank'); ylabel('Predictor importance weight');
+    title('ReliefF Weights');
+    %
+   %%
+    % Analyze Error Performance
+    reliefX = 5:10:150;
+    reliefErr = [];
+    for w=5:10:150
+        reliefErr(end+1) = transpose(crossval(@my_fun_lib,XMat(:,reliefRank(1:w)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize;
+    end
+    plot(reliefX, reliefErr,'o');
+    xlabel('Number of Features'); ylabel('ReliefF MCE for 10 Clusters');
+    title('ReliefF Feature Selection with LOO SVM MCE');
+    % Look at stability over K
+    stdWeights = []; meanWeights = [];
+    for K=5:5:100
+        [reliefRank, reliefWeights] = relieff(XMat,YMat,K,'method','classification');
+        stdWeights(end+1) = std(reliefWeights);
+        meanWeights(end+1) = mean(reliefWeights);
+        xVals(end+1) = K;
+    end
+    plot(xVals, stdWeights,'o',xVals,meanWeights,'r^');
+    xlabel('Number of Clusters');
+    legend({'Weights Standard Deviation' 'Weights Mean'},'location','NW');
+
+    %% FILTER: mRMR
+    % MID
+    feaMID = mrmr_mid_d(int64(XMat),int64(YMat),120);
+    % MIQ
+    feaMIO = mrmr_miq_d(int64(XMat),int64(YMat),120);
+    xMIVals = []; midErrVals = []; mioErrVals = [];
+    for m=1:4:length(feaMID)
+        xMIVals(end+1) = m;
+        midErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(:,feaMID(1:m)),YMat,'partition',tenfoldCVP))/tenfoldCVP.TestSize;
+        mioErrVals(end+1) = transpose(crossval(@my_fun_lib,XMat(:,feaMIO(1:m)),YMat,'partition',tenfoldCVP))/tenfoldCVP.TestSize;
+    end
     plot(xMIVals, midErrVals,'o',xMIVals,mioErrVals,'r^');
-    xlabel('Number of Features');
-    ylabel('MCE');
+    xlabel('Number of Features'); ylabel('MCE');
     legend({'MCE for MID scheme' 'MCE for MIO scheme'},'location','NW');
     title('mRMR Feature Selection with LOO SVM MCE');
     
-    % FILTER+WRAPPER: Remove Most Correlated Features Until Reach Model Error Minimum
+    %% FILTER+WRAPPER: Remove Most Correlated Features Until Reach Model Error Minimum
     featuresIdxSortbyC = zeros(1,size(XMat,2));
     XMatCorr = XMat;
     leaveoutCVP = cvpartition(YMat,'LeaveOut');
@@ -70,22 +103,19 @@
     xlabel('Number of Features');
     ylabel('MCE');
     title('Correlation-based Remove Features vs LOO MCE'); % Removing 104 gives lowest error
-    %% ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
+    % ADDITIONAL WRAPPER: Apply Sequential Features Selection to Above
     fs2 = featuresIdxSortbyC(105:end);
     fsLocalCorr = sequentialfs(@my_fun_lib,XMat(:,fs2),YMat,'cv',leaveoutCVP,'Nf',50);
-    testMCECorr = transpose(crossval(@my_fun_lib,XMat(:,fs2(fsLocalCorr)),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205
+    testMCECorr = transpose(crossval(@my_fun_lib,XMat(:,fs2(fsLocalCorr)),YMat,'partition',leaveoutCVP))/tenfoldCVP.TestSize; %Result: 0.1205
     
     %% FILTER+WRAPPER: Add Most Predictive Features Until Reach Model Error Minimum
-    drCases = XMat(YMat==1,:);
-    selfCases = XMat(YMat==0,:);
+    drCases = XMat(YMat==1,:); selfCases = XMat(YMat==0,:);
     [h,p,ci,stat] = ttest2(drCases,selfCases,'Vartype','unequal');
     ecdf(p);
     xlabel('P value'); ylabel('CDF value'); % Shows ~80% of features have p-val<.5 and ~20% have pval ~= 0
     % Determine which features to include by plotting classfication error rate of svm with leave-out-1 cross validation against num of features (added in their p order)
     [~,featureIdxSortbyP] = sort(p,2); % sort the features
-    testMCE = zeros(1,10);
-    resubMCE = zeros(1,10);
-    nfs = 80:5:125;
+    testMCE = zeros(1,10); resubMCE = zeros(1,10); nfs = 80:5:125;
     leaveoutCVP = cvpartition(YMat,'LeaveOut'); 
     resubCVP = cvpartition(length(YMat),'resubstitution');
     for i = 1:10
@@ -115,22 +145,23 @@
     %     [orderlist,ignore] = find( [historyCV.In(1,:); diff(historyCV.In(1:38,:) )]' );
     %     testMCECVfor38 = transpose(crossval(@my_fun_lib,XMat(:,fsCVfor38),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize
     
-    % WRAPPER: Sequential Features Selection
+    %% WRAPPER: Sequential Features Selection
     % Apply SFS Across all 345 Features Using Leaveout One CV
-    inmodel = sequentialfs(@my_fun_lib,XMat,YMat,'cv',leaveoutCVP);
-    fullSFSError = transpose(crossval(@my_fun_lib,XMat(:,inmodel),YMat,'partition',leaveoutCVP))/leaveoutCVP.TestSize; %Result: 0.1205 & 16 Features
+    fivefoldCVP = cvpartition(YMat,'k',5);
+    inmodel = sequentialfs(@my_fun_lib,XMat(:,reliefRank(1:200)),YMat,'cv',fivefoldCVP);
+    fullSFSError = transpose(crossval(@my_fun_lib,XMat(:,inmodel),YMat,'partition',fivefoldCVP))/fivefoldCVP.TestSize; %Result: 0.1205 & 16 Features
     
     %% Select Best Hyperparameters (C & Gamma) with Cross Validation
     bestcv = 0;
-    for log2c = -1:3
-      for log2g = -4:1
-        cmd = ['-v 5 -c ', num2str(2^log2c), ' -g ', num2str(2^log2g)];
+    for log2c = -1:10
+%       for log2g = -10:1
+        cmd = ['-v 5 -s 0 -t 0 -c ', num2str(2^log2c)];
         cv = svmtrain(YMat, XMat, cmd);
         if (cv >= bestcv),
           bestcv = cv; bestc = 2^log2c; bestg = 2^log2g;
         end
         fprintf('%g %g %g (best c=%g, g=%g, rate=%g)\n', log2c, log2g, cv, bestc, bestg, bestcv);
-      end
+%       end
     end
 
     

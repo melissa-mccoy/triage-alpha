@@ -13,11 +13,10 @@ function [ criterion ] = my_fun_lib(trainX,trainY,testX,testY)
 %         fprintf('%g %g %g (best c=%g, g=%g, rate=%g)\n', log2c, log2g, cv, bestc, bestg, bestcv);
 %       end
 %     end
-    bestc = 1;
-%     bestg = 0.0625;
-%     neg_size = sum(trainY == 0);
-%     pos_size = sum(trainY == 1);
-    model = svmtrain(trainY, trainX,['-s 0 -t 0 -c ' num2str(bestc) ]);
+    bestc = 120;
+    bestg = .002;
+
+    model = svmtrain(trainY, trainX,['-s 0 -t 2 -c ' num2str(bestc) ' -g ' num2str(bestg)]);
     criterion = sum(svmpredict(testY, testX, model) ~= testY);
     
 end

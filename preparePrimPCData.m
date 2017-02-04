@@ -97,12 +97,12 @@ end
 
 %% STEP4: Create X & Y inputs for triageSVMLib
 % Initialize X for given pc
-XY_pc = FeaturesTable(:,[2 15:16]);
+XY_pc_throat = FeaturesTable(:,[2 15:16]);
 
 %Add features with >5% data within respective pcs
 for c = 17:size(FeaturesTable,2)
-    if FeaturesAnalysis.overall{c} >= .05
-        XY_pc = [XY_pc FeaturesTable(:,c)];
+    if FeaturesAnalysis.overall{c} >= .01
+        XY_pc_throat = [XY_pc_throat FeaturesTable(:,c)];
     end
 end
 % XY_pc_SFS = FeaturesTable(:,[ 2 17 34 44 45 57 63 84 89 111 112 128 138 155 158 181 ]);
